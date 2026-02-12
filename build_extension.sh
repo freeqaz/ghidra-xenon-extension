@@ -44,12 +44,9 @@ cp Module.manifest "$STAGE/"
 cp -r data "$STAGE/"
 cp -r ghidra_scripts "$STAGE/"
 
-# Remove SLEIGH source files from the distribution to keep size down.
-# The compiled .sla is all that's needed at runtime.
-# Users who want to recompile can get sources from the git repository.
-# Comment out the following lines to include sources in the zip:
-rm -f "$STAGE/data/languages/"*.sinc
-rm -f "$STAGE/data/languages/"*.slaspec
+# SLEIGH source files (.sinc, .slaspec) are included in the distribution.
+# Ghidra requires them present alongside the compiled .sla for validation,
+# even though it doesn't recompile from scratch at runtime.
 
 # Use zip if available, fall back to 7z
 if command -v zip &>/dev/null; then

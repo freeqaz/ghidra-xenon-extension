@@ -66,9 +66,7 @@ The SLEIGH source files are included in this repository for reference and recomp
 ./build_extension.sh 12.1
 ```
 
-This produces a `ghidra_12.1_PUBLIC_*_GhidraXenon.zip` ready for installation. The build script strips SLEIGH source files from the zip (only the compiled `.sla` is needed at runtime) to keep the package small (~200KB).
-
-To include source files in the zip, comment out the `rm` lines in `build_extension.sh`.
+This produces a `ghidra_12.1_PUBLIC_*_GhidraXenon.zip` ready for installation.
 
 ### Recompiling the SLEIGH specification
 
