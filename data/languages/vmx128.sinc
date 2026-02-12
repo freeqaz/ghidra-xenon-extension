@@ -1,0 +1,2734 @@
+# Based on https://github.com/NationalSecurityAgency/ghidra/files/8405335/vmx128.txt
+# Category: VMX128 Vector Instructions
+
+# version 1.1 - Added pcode semantics
+
+# =====================================================================
+# VMX128 Pcodeop Definitions
+# =====================================================================
+
+# Load/Store helpers (for partial/unaligned loads)
+define pcodeop loadVectorLeftIndexed128;
+define pcodeop loadVectorRightIndexed128;
+define pcodeop loadVectorForShiftLeft128;
+define pcodeop loadVectorForShiftRight128;
+define pcodeop loadVectorElementWordIndexed128;
+define pcodeop storeVectorLeftIndexed128;
+define pcodeop storeVectorRightIndexed128;
+define pcodeop storeVectorElementWordIndexed128;
+
+# Floating-point arithmetic
+define pcodeop vectorAddFloatingPoint128;
+define pcodeop vectorSubtractFloatingPoint128;
+define pcodeop vectorMultiplyFloatingPoint128;
+define pcodeop vectorMultiplyAddFloatingPoint128;
+define pcodeop vectorMultiplyAddCarryout128;
+define pcodeop vectorNegativeMultiplySubtract128;
+define pcodeop vectorDotProduct3128;
+define pcodeop vectorDotProduct4128;
+# vectorMaximumFloatingPoint128 and vectorMinimumFloatingPoint128 now implemented with native pcode
+
+# Floating-point estimates
+define pcodeop vectorReciprocalEstimate128;
+define pcodeop vectorReciprocalSquareRootEstimate128;
+define pcodeop vector2RaisedToExponentEstimate128;
+define pcodeop vectorLog2Estimate128;
+
+# Floating-point rounding
+define pcodeop vectorRoundTowardMinusInfinity128;
+define pcodeop vectorRoundTowardNearest128;
+define pcodeop vectorRoundTowardPlusInfinity128;
+define pcodeop vectorRoundTowardZero128;
+
+# Floating-point conversion
+define pcodeop vectorConvertToSignedFixedPoint128;
+define pcodeop vectorConvertToUnsignedFixedPoint128;
+define pcodeop vectorConvertFromSignedFixedPoint128;
+define pcodeop vectorConvertFromUnsignedFixedPoint128;
+
+# Compare operations
+define pcodeop vectorCompareEqualFloatingPoint128;
+define pcodeop vectorCompareGreaterEqualFloatingPoint128;
+define pcodeop vectorCompareGreaterThanFloatingPoint128;
+define pcodeop vectorCompareBoundsFloatingPoint128;
+define pcodeop vectorCompareEqualUnsignedWord128;
+
+# Permute and shift
+define pcodeop vectorPermute128;
+define pcodeop vectorPermuteWordImmediate128;
+define pcodeop vectorShiftLeftDoubleByOctet128;
+define pcodeop vectorRotateLeftImmediateMaskInsert128;
+define pcodeop vectorShiftLeftByOctet128;
+define pcodeop vectorShiftRightByOctet128;
+
+# Pack operations
+define pcodeop vectorPackD3D128;
+define pcodeop vectorPackSignedHalfWordSaturate128;
+define pcodeop vectorPackSignedHalfWordUnsignedSaturate128;
+define pcodeop vectorPackSignedWordSaturate128;
+define pcodeop vectorPackSignedWordUnsignedSaturate128;
+define pcodeop vectorPackUnsignedHalfWordModulo128;
+define pcodeop vectorPackUnsignedHalfWordSaturate128;
+define pcodeop vectorPackUnsignedWordModulo128;
+define pcodeop vectorPackUnsignedWordSaturate128;
+
+# Unpack operations
+define pcodeop vectorUnpackD3D128;
+define pcodeop vectorUnpackHighSignedByte128;
+define pcodeop vectorUnpackHighSignedHalfWord128;
+define pcodeop vectorUnpackLowSignedByte128;
+define pcodeop vectorUnpackLowSignedHalfWord128;
+
+# Merge operations
+define pcodeop vectorMergeHighWord128;
+define pcodeop vectorMergeLowWord128;
+
+# Splat operations
+define pcodeop vectorSplatWord128;
+define pcodeop vectorSplatImmediateSignedWord128;
+
+# Shift/Rotate operations
+define pcodeop vectorRotateLeftWord128;
+define pcodeop vectorShiftLeftWord128;
+define pcodeop vectorShiftRightArithmeticWord128;
+define pcodeop vectorShiftRightWord128;
+
+# Select operation
+define pcodeop vectorConditionalSelect128;
+
+define register offset=0x10000 size=16 [
+	vr0 vr1 vr2 vr3 vr4 vr5 vr6 vr7 vr8 vr9 vr10 vr11 vr12 vr13 vr14 vr15 vr16 vr17 vr18 vr19 vr20 vr21 vr22 vr23 vr24 vr25 vr26 vr27 vr28 vr29 vr30 vr31
+	vr32 vr33 vr34 vr35 vr36 vr37 vr38 vr39 vr40 vr41 vr42 vr43 vr44 vr45 vr46 vr47 vr48 vr49 vr50 vr51 vr52 vr53 vr54 vr55 vr56 vr57 vr58 vr59 vr60 vr61 vr62 vr63
+	vr64 vr65 vr66 vr67 vr68 vr69 vr70 vr71 vr72 vr73 vr74 vr75 vr76 vr77 vr78 vr79 vr80 vr81 vr82 vr83 vr84 vr85 vr86 vr87 vr88 vr89 vr90 vr91 vr92 vr93 vr94 vr95
+	vr96 vr97 vr98 vr99 vr100 vr101 vr102 vr103 vr104 vr105 vr106 vr107 vr108 vr109 vr110 vr111 vr112 vr113 vr114 vr115 vr116 vr117 vr118 vr119 vr120 vr121 vr122 vr123 vr124 vr125 vr126 vr127
+];
+
+define token vmx128_instr(32)
+	opcode_00_01 = (0, 1)
+	opcode_00_10 = (0, 10)
+	opcode_04_04 = (4, 4)
+	opcode_04_05 = (4, 5)
+	opcode_04_10 = (4, 10)
+	opcode_06_09 = (6, 9)
+	opcode_08_10 = (8,10)
+	opcode_09_09 = (9, 9)
+	opcode_09_10 = (9, 10)
+	opcode_16_20 = (16, 20)
+	opcode_26_31 = (26, 31)
+	vbh_00_01 = (0, 1)
+	vdh_02_03 = (2, 3)
+	a_5_5 = (5, 5)
+	A_10_10 = (10, 10)
+	permH_06_08 = (6, 8)
+	permL_11_15 = (11, 15)
+	vregD_21_25_00 = (21, 25)
+	vregD_21_25_01 = (21, 25)
+	vregD_21_25_10 = (21, 25)
+	vregD_21_25_11 = (21, 25)
+	vregB_11_15_00 = (11, 15)
+	vregB_11_15_01 = (11, 15)
+	vregB_11_15_10 = (11, 15)
+	vregB_11_15_11 = (11, 15)
+	vregA_16_20_00 = (16, 20)
+	vregA_16_20_01 = (16, 20)
+	vregA_16_20_10 = (16, 20)
+	vregA_16_20_11 = (16, 20)
+	vregC_06_08 = (6, 8)
+	regB_16_20 = (16, 20)
+	simm_16_20 = (16, 20) signed
+	uimm_06_09 = (6, 9)
+	uimm_16_20 = (16, 20)
+	regC_11_15 = (11, 15)
+	# D3D pack/unpack fields
+	d3dtype_18_20 = (18, 20)  # D3DType: 3 bits for packed data type
+	vmask_16_17 = (16, 17)    # VMASK: 2 bits for pack mask
+	zimm_06_07 = (6, 7)       # Zimm: 2 bits for rotate/shift amount
+;
+
+attach variables [ vregD_21_25_00 vregA_16_20_00 vregB_11_15_00 ]
+    [ vr0 vr1 vr2 vr3 vr4 vr5 vr6 vr7 vr8 vr9 vr10 vr11 vr12 vr13 vr14 vr15 vr16 vr17 vr18 vr19 vr20 vr21 vr22 vr23 vr24 vr25 vr26 vr27 vr28 vr29 vr30 vr31 ];
+attach variables [ vregD_21_25_01 vregA_16_20_01 vregB_11_15_01 ]
+    [ vr32 vr33 vr34 vr35 vr36 vr37 vr38 vr39 vr40 vr41 vr42 vr43 vr44 vr45 vr46 vr47 vr48 vr49 vr50 vr51 vr52 vr53 vr54 vr55 vr56 vr57 vr58 vr59 vr60 vr61 vr62 vr63 ];
+attach variables [ vregD_21_25_10 vregA_16_20_10 vregB_11_15_10 ]
+    [ vr64 vr65 vr66 vr67 vr68 vr69 vr70 vr71 vr72 vr73 vr74 vr75 vr76 vr77 vr78 vr79 vr80 vr81 vr82 vr83 vr84 vr85 vr86 vr87 vr88 vr89 vr90 vr91 vr92 vr93 vr94 vr95 ];
+attach variables [ vregD_21_25_11 vregA_16_20_11 vregB_11_15_11 ]
+    [ vr96 vr97 vr98 vr99 vr100 vr101 vr102 vr103 vr104 vr105 vr106 vr107 vr108 vr109 vr110 vr111 vr112 vr113 vr114 vr115 vr116 vr117 vr118 vr119 vr120 vr121 vr122 vr123 vr124 vr125 vr126 vr127 ];
+
+attach variables [ vregC_06_08 ]
+    [ vr0 vr1 vr2 vr3 vr4 vr5 vr6 vr7 ];
+
+attach variables [ regB_16_20 regC_11_15 ]
+    [ r0  r1  r2  r3  r4  r5  r6  r7  r8  r9  r10 r11 r12 r13 r14 r15
+      r16 r17 r18 r19 r20 r21 r22 r23 r24 r25 r26 r27 r28 r29 r30 r31 ];
+
+vregD_21_25: vregD_21_25_00	is vregD_21_25_00 & vdh_02_03=0b00	{ export vregD_21_25_00; }
+vregD_21_25: vregD_21_25_01	is vregD_21_25_01 & vdh_02_03=0b01	{ export vregD_21_25_01; }
+vregD_21_25: vregD_21_25_10	is vregD_21_25_10 & vdh_02_03=0b10	{ export vregD_21_25_10; }
+vregD_21_25: vregD_21_25_11	is vregD_21_25_11 & vdh_02_03=0b11	{ export vregD_21_25_11; }
+
+vregB_11_15: vregB_11_15_00	is vregB_11_15_00 & vbh_00_01=0b00	{ export vregB_11_15_00; }
+vregB_11_15: vregB_11_15_01	is vregB_11_15_01 & vbh_00_01=0b01	{ export vregB_11_15_01; }
+vregB_11_15: vregB_11_15_10	is vregB_11_15_10 & vbh_00_01=0b10	{ export vregB_11_15_10; }
+vregB_11_15: vregB_11_15_11	is vregB_11_15_11 & vbh_00_01=0b11	{ export vregB_11_15_11; }
+
+vregA_16_20: vregA_16_20_00	is vregA_16_20_00 & A_10_10=0b0 & a_5_5=0b0	{ export vregA_16_20_00; }
+vregA_16_20: vregA_16_20_01	is vregA_16_20_01 & A_10_10=0b0 & a_5_5=0b1	{ export vregA_16_20_01; }
+vregA_16_20: vregA_16_20_10	is vregA_16_20_10 & A_10_10=0b1 & a_5_5=0b0	{ export vregA_16_20_10; }
+vregA_16_20: vregA_16_20_11	is vregA_16_20_11 & A_10_10=0b1 & a_5_5=0b1 { export vregA_16_20_11; }
+
+# Combined PERM field: high 3 bits from 6-8, low 5 bits from 11-15 = 8-bit permutation index
+perm128: val is permH_06_08 & permL_11_15 [ val = (permH_06_08 << 5) | permL_11_15; ] { export *[const]:1 val; }
+
+# 000100AAAAABBBBBCCCCC0001000AA11
+# lvewx128 vr0, r0, r0 - Load Vector128 Element Word Indexed
+:lvewx128 vregD_21_25, regB_16_20, regC_11_15 is opcode_26_31=0b000100 & regB_16_20 & regC_11_15 & opcode_04_10=0b0001000 & vregD_21_25 & opcode_00_01=0b11
+{
+	vregD_21_25 = loadVectorElementWordIndexed128(regB_16_20, regC_11_15);
+}
+
+# 000100AAAAABBBBBCCCCC1000000AA11
+# lvlx128 vr0, r0, r0 - Load Vector128 Left Indexed
+:lvlx128 vregD_21_25, regB_16_20, regC_11_15 is opcode_26_31=0b000100 & regB_16_20 & regC_11_15 & opcode_04_10=0b1000000 & vregD_21_25 & opcode_00_01=0b11
+{
+	vregD_21_25 = loadVectorLeftIndexed128(regB_16_20, regC_11_15);
+}
+
+# 000100AAAAABBBBBCCCCC1000100AA11
+# lvrx128 vr0, r0, r0 - Load Vector128 Right Indexed
+:lvrx128 vregD_21_25, regB_16_20, regC_11_15 is opcode_26_31=0b000100 & regB_16_20 & regC_11_15 & opcode_04_10=0b1000100 & vregD_21_25 & opcode_00_01=0b11
+{
+	vregD_21_25 = loadVectorRightIndexed128(regB_16_20, regC_11_15);
+}
+
+# 000100AAAAABBBBBCCCCC1100000AA11
+# lvlxl128 vr0, r0, r0 - Load Vector128 Left Indexed LRU
+:lvlxl128 vregD_21_25, regB_16_20, regC_11_15 is opcode_26_31=0b000100 & regB_16_20 & regC_11_15 & opcode_04_10=0b1100000 & vregD_21_25 & opcode_00_01=0b11
+{
+	vregD_21_25 = loadVectorLeftIndexed128(regB_16_20, regC_11_15);
+}
+
+# 000100AAAAABBBBBCCCCC1100100AA11
+# lvrxl128 vr0, r0, r0 - Load Vector128 Right Indexed LRU
+:lvrxl128 vregD_21_25, regB_16_20, regC_11_15 is opcode_26_31=0b000100 & regB_16_20 & regC_11_15 & opcode_04_10=0b1100100 & vregD_21_25 & opcode_00_01=0b11
+{
+	vregD_21_25 = loadVectorRightIndexed128(regB_16_20, regC_11_15);
+}
+
+# 000100AAAAABBBBBCCCCC0000000AA11
+# lvsl128 vr0, r0, r0 - Load Vector128 for Shift Left
+:lvsl128 vregD_21_25, regB_16_20, regC_11_15 is opcode_26_31=0b000100 & regB_16_20 & regC_11_15 & opcode_04_10=0b0000000 & vregD_21_25 & opcode_00_01=0b11
+{
+	vregD_21_25 = loadVectorForShiftLeft128(regB_16_20, regC_11_15);
+}
+
+# 000100AAAAABBBBBCCCCC0000100AA11
+# lvsr128 vr0, r0, r0 - Load Vector128 for Shift Right
+:lvsr128 vregD_21_25, regB_16_20, regC_11_15 is opcode_26_31=0b000100 & regB_16_20 & regC_11_15 & opcode_04_10=0b0000100 & vregD_21_25 & opcode_00_01=0b11
+{
+	vregD_21_25 = loadVectorForShiftRight128(regB_16_20, regC_11_15);
+}
+
+# 000100AAAAABBBBBCCCCC0001100AA11
+# lvx128 vr0, r0, r0 - Load Vector128 Indexed (aligned)
+:lvx128 vregD_21_25, regB_16_20, regC_11_15 is opcode_26_31=0b000100 & regB_16_20 & regC_11_15 & opcode_04_10=0b0001100 & vregD_21_25 & opcode_00_01=0b11
+{
+	# EA = (rA|0) + rB, aligned to 16-byte boundary
+	tmp:$(REGISTER_SIZE) = (regB_16_20 + regC_11_15) & 0xfffffffffffffff0;
+	vregD_21_25 = *[ram]:16 tmp;
+}
+
+# 000100AAAAABBBBBCCCCC0101100AA11
+# lvxl128 vr0, r0, r0 - Load Vector128 Indexed LRU (aligned)
+:lvxl128 vregD_21_25, regB_16_20, regC_11_15 is opcode_26_31=0b000100 & regB_16_20 & regC_11_15 & opcode_04_10=0b0101100 & vregD_21_25 & opcode_00_01=0b11
+{
+	# EA = (rA|0) + rB, aligned to 16-byte boundary (LRU hint ignored)
+	tmp:$(REGISTER_SIZE) = (regB_16_20 + regC_11_15) & 0xfffffffffffffff0;
+	vregD_21_25 = *[ram]:16 tmp;
+}
+
+# 000100AAAAABBBBBCCCCC0011000AA11
+# stewx128 vr0, r0, r0 - Store Vector128 Element Word Indexed
+:stewx128 vregD_21_25, regB_16_20, regC_11_15 is opcode_26_31=0b000100 & regB_16_20 & regC_11_15 & opcode_04_10=0b0011000 & vregD_21_25 & opcode_00_01=0b11
+{
+	storeVectorElementWordIndexed128(vregD_21_25, regB_16_20, regC_11_15);
+}
+
+# 000100AAAAABBBBBCCCCC1010000AA11
+# stvlx128 vr0, r0, r0 - Store Vector128 Left Indexed
+:stvlx128 vregD_21_25, regB_16_20, regC_11_15 is opcode_26_31=0b000100 & regB_16_20 & regC_11_15 & opcode_04_10=0b1010000 & vregD_21_25 & opcode_00_01=0b11
+{
+	storeVectorLeftIndexed128(vregD_21_25, regB_16_20, regC_11_15);
+}
+
+# 000100AAAAABBBBBCCCCC1110000AA11
+# stvlxl128 vr0, r0, r0 - Store Vector128 Left Indexed LRU
+:stvlxl128 vregD_21_25, regB_16_20, regC_11_15 is opcode_26_31=0b000100 & regB_16_20 & regC_11_15 & opcode_04_10=0b1110000 & vregD_21_25 & opcode_00_01=0b11
+{
+	storeVectorLeftIndexed128(vregD_21_25, regB_16_20, regC_11_15);
+}
+
+# 000100AAAAABBBBBCCCCC1010100AA11
+# stvrx128 vr0, r0, r0 - Store Vector128 Right Indexed
+:stvrx128 vregD_21_25, regB_16_20, regC_11_15 is opcode_26_31=0b000100 & regB_16_20 & regC_11_15 & opcode_04_10=0b1010100 & vregD_21_25 & opcode_00_01=0b11
+{
+	storeVectorRightIndexed128(vregD_21_25, regB_16_20, regC_11_15);
+}
+
+# 000100AAAAABBBBBCCCCC1110100AA11
+# stvrxl128 vr0, r0, r0 - Store Vector128 Right Indexed LRU
+:stvrxl128 vregD_21_25, regB_16_20, regC_11_15 is opcode_26_31=0b000100 & regB_16_20 & regC_11_15 & opcode_04_10=0b1110100 & vregD_21_25 & opcode_00_01=0b11
+{
+	storeVectorRightIndexed128(vregD_21_25, regB_16_20, regC_11_15);
+}
+
+# 000100AAAAABBBBBCCCCC0011100AA11
+# stvx128 vr0, r0, r0 - Store Vector128 Indexed (aligned)
+:stvx128 vregD_21_25, regB_16_20, regC_11_15 is opcode_26_31=0b000100 & regB_16_20 & regC_11_15 & opcode_04_10=0b0011100 & vregD_21_25 & opcode_00_01=0b11
+{
+	# EA = (rA|0) + rB, aligned to 16-byte boundary
+	tmp:$(REGISTER_SIZE) = (regB_16_20 + regC_11_15) & 0xfffffffffffffff0;
+	*[ram]:16 tmp = vregD_21_25;
+}
+
+# 000100AAAAABBBBBCCCCC0111100AA11
+# stvxl128 vr0, r0, r0 - Store Vector128 Indexed LRU (aligned)
+:stvxl128 vregD_21_25, regB_16_20, regC_11_15 is opcode_26_31=0b000100 & regB_16_20 & regC_11_15 & opcode_04_10=0b0111100 & vregD_21_25 & opcode_00_01=0b11
+{
+	# EA = (rA|0) + rB, aligned to 16-byte boundary (LRU hint ignored)
+	tmp:$(REGISTER_SIZE) = (regB_16_20 + regC_11_15) & 0xfffffffffffffff0;
+	*[ram]:16 tmp = vregD_21_25;
+}
+
+# 000101AAAAABBBBBCCCCCB0000B1AACC
+# vaddfp128 vr0, vr0, vr0 - Vector128 Add Floating Point
+:vaddfp128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b0000 & opcode_04_04=0b1
+{
+	# Lane-wise FP add: vD[i] = vA[i] + vB[i] for each 32-bit float lane
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local a_3:4 = vregA_16_20[0,32];
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+	local res_0:4 = a_0 f+ b_0;
+	local res_1:4 = a_1 f+ b_1;
+	local res_2:4 = a_2 f+ b_2;
+	local res_3:4 = a_3 f+ b_3;
+	vregD_21_25[96,32] = res_0;
+	vregD_21_25[64,32] = res_1;
+	vregD_21_25[32,32] = res_2;
+	vregD_21_25[0,32] = res_3;
+}
+
+# 000101AAAAABBBBBCCCCCB1000B1AACC
+# vand128 vr0, vr0, vr0 - Vector128 Logical AND
+:vand128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b1000 & opcode_04_04=0b1
+{
+	vregD_21_25 = vregA_16_20 & vregB_11_15;
+}
+
+# 000101AAAAABBBBBCCCCCB1001B1AACC
+# vandc128 vr0, vr0, vr0 - Vector128 Logical AND with Complement
+:vandc128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b1001 & opcode_04_04=0b1
+{
+	vregD_21_25 = vregA_16_20 & ~vregB_11_15;
+}
+
+# 000110AAAAAsssssBBBBB0100011AABB
+# vcfpsxws128 vr0, vr0, SIMM - Convert FP to Signed Fixed-Point Word Saturate
+:vcfpsxws128 vregD_21_25, simm_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & simm_16_20 & vregB_11_15 & opcode_04_10=0b0100011
+{
+	vregD_21_25 = vectorConvertToSignedFixedPoint128(vregB_11_15, simm_16_20:1);
+}
+
+# 000110AAAAAsssssBBBBB0100111AABB
+# vcfpuxws128 vr0, vr0, UIMM - Convert FP to Unsigned Fixed-Point Word Saturate
+:vcfpuxws128 vregD_21_25, uimm_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & uimm_16_20 & vregB_11_15 & opcode_04_10=0b0100111
+{
+	vregD_21_25 = vectorConvertToUnsignedFixedPoint128(vregB_11_15, uimm_16_20:1);
+}
+
+# 000110AAAAABBBBBCCCCCB0110B0AACC
+# vcmpbfp128 vr0, vr0, vr0 - Compare Bounds Floating Point
+:vcmpbfp128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b0110 & opcode_04_04=0b0
+{
+	# Lane-wise FP compare bounds:
+	# bit 31 set when a > b (not <=), bit 30 set when a < -b (not >=).
+	# NaN sets both bits (0xC0000000).
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local a_3:4 = vregA_16_20[0,32];
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+
+	# Lane 0
+	local res_0:4 = 0;
+	if (nan(a_0) | nan(b_0)) goto <lane0_nan>;
+	local neg_b_0:4 = 0 f- b_0;
+	if (a_0 f<= b_0) goto <lane0_check_low>;
+	res_0 = res_0 | 0x80000000;
+	<lane0_check_low>
+	if (a_0 f>= neg_b_0) goto <lane1>;
+	res_0 = res_0 | 0x40000000;
+	goto <lane1>;
+	<lane0_nan>
+	res_0 = 0xC0000000;
+	<lane1>
+
+	# Lane 1
+	local res_1:4 = 0;
+	if (nan(a_1) | nan(b_1)) goto <lane1_nan>;
+	local neg_b_1:4 = 0 f- b_1;
+	if (a_1 f<= b_1) goto <lane1_check_low>;
+	res_1 = res_1 | 0x80000000;
+	<lane1_check_low>
+	if (a_1 f>= neg_b_1) goto <lane2>;
+	res_1 = res_1 | 0x40000000;
+	goto <lane2>;
+	<lane1_nan>
+	res_1 = 0xC0000000;
+	<lane2>
+
+	# Lane 2
+	local res_2:4 = 0;
+	if (nan(a_2) | nan(b_2)) goto <lane2_nan>;
+	local neg_b_2:4 = 0 f- b_2;
+	if (a_2 f<= b_2) goto <lane2_check_low>;
+	res_2 = res_2 | 0x80000000;
+	<lane2_check_low>
+	if (a_2 f>= neg_b_2) goto <lane3>;
+	res_2 = res_2 | 0x40000000;
+	goto <lane3>;
+	<lane2_nan>
+	res_2 = 0xC0000000;
+	<lane3>
+
+	# Lane 3
+	local res_3:4 = 0;
+	if (nan(a_3) | nan(b_3)) goto <lane3_nan>;
+	local neg_b_3:4 = 0 f- b_3;
+	if (a_3 f<= b_3) goto <lane3_check_low>;
+	res_3 = res_3 | 0x80000000;
+	<lane3_check_low>
+	if (a_3 f>= neg_b_3) goto <done>;
+	res_3 = res_3 | 0x40000000;
+	goto <done>;
+	<lane3_nan>
+	res_3 = 0xC0000000;
+	<done>
+
+	vregD_21_25[96,32] = res_0;
+	vregD_21_25[64,32] = res_1;
+	vregD_21_25[32,32] = res_2;
+	vregD_21_25[0,32] = res_3;
+}
+
+# 000110AAAAABBBBBCCCCCB0111B0AACC
+# vcmpbfp128. vr0, vr0, vr0 - Compare Bounds Floating Point (with CR update)
+:vcmpbfp128. vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b0111 & opcode_04_04=0b0
+{
+	# Lane-wise FP compare bounds:
+	# bit 31 set when a > b (not <=), bit 30 set when a < -b (not >=).
+	# NaN sets both bits (0xC0000000).
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local a_3:4 = vregA_16_20[0,32];
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+
+	# Lane 0
+	local res_0:4 = 0;
+	if (nan(a_0) | nan(b_0)) goto <lane0_nan>;
+	local neg_b_0:4 = 0 f- b_0;
+	if (a_0 f<= b_0) goto <lane0_check_low>;
+	res_0 = res_0 | 0x80000000;
+	<lane0_check_low>
+	if (a_0 f>= neg_b_0) goto <lane1>;
+	res_0 = res_0 | 0x40000000;
+	goto <lane1>;
+	<lane0_nan>
+	res_0 = 0xC0000000;
+	<lane1>
+
+	# Lane 1
+	local res_1:4 = 0;
+	if (nan(a_1) | nan(b_1)) goto <lane1_nan>;
+	local neg_b_1:4 = 0 f- b_1;
+	if (a_1 f<= b_1) goto <lane1_check_low>;
+	res_1 = res_1 | 0x80000000;
+	<lane1_check_low>
+	if (a_1 f>= neg_b_1) goto <lane2>;
+	res_1 = res_1 | 0x40000000;
+	goto <lane2>;
+	<lane1_nan>
+	res_1 = 0xC0000000;
+	<lane2>
+
+	# Lane 2
+	local res_2:4 = 0;
+	if (nan(a_2) | nan(b_2)) goto <lane2_nan>;
+	local neg_b_2:4 = 0 f- b_2;
+	if (a_2 f<= b_2) goto <lane2_check_low>;
+	res_2 = res_2 | 0x80000000;
+	<lane2_check_low>
+	if (a_2 f>= neg_b_2) goto <lane3>;
+	res_2 = res_2 | 0x40000000;
+	goto <lane3>;
+	<lane2_nan>
+	res_2 = 0xC0000000;
+	<lane3>
+
+	# Lane 3
+	local res_3:4 = 0;
+	if (nan(a_3) | nan(b_3)) goto <lane3_nan>;
+	local neg_b_3:4 = 0 f- b_3;
+	if (a_3 f<= b_3) goto <lane3_check_low>;
+	res_3 = res_3 | 0x80000000;
+	<lane3_check_low>
+	if (a_3 f>= neg_b_3) goto <done>;
+	res_3 = res_3 | 0x40000000;
+	goto <done>;
+	<lane3_nan>
+	res_3 = 0xC0000000;
+	<done>
+
+	vregD_21_25[96,32] = res_0;
+	vregD_21_25[64,32] = res_1;
+	vregD_21_25[32,32] = res_2;
+	vregD_21_25[0,32] = res_3;
+
+	local any_out:4 = res_0 | res_1;
+	any_out = any_out | res_2;
+	any_out = any_out | res_3;
+	local all_in:1 = (any_out == 0);
+	setCrBit(cr6, 0, 0);
+	setCrBit(cr6, 1, 0);
+	setCrBit(cr6, 2, all_in);
+	setCrBit(cr6, 3, 0);
+}
+
+# 000110AAAAABBBBBCCCCCB0000B0AACC
+# vcmpeqfp128 vr0, vr0, vr0 - Compare Equal Floating Point
+:vcmpeqfp128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b0000 & opcode_04_04=0b0
+{
+	# Lane-wise FP compare equal: mask is 0xFFFFFFFF when true, 0x00000000 when false
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local a_3:4 = vregA_16_20[0,32];
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+
+	local mask_0:4 = 0;
+	if (a_0 f== b_0) goto <set_lane0>;
+	goto <lane1>;
+	<set_lane0>
+	mask_0 = 0xFFFFFFFF;
+	<lane1>
+
+	local mask_1:4 = 0;
+	if (a_1 f== b_1) goto <set_lane1>;
+	goto <lane2>;
+	<set_lane1>
+	mask_1 = 0xFFFFFFFF;
+	<lane2>
+
+	local mask_2:4 = 0;
+	if (a_2 f== b_2) goto <set_lane2>;
+	goto <lane3>;
+	<set_lane2>
+	mask_2 = 0xFFFFFFFF;
+	<lane3>
+
+	local mask_3:4 = 0;
+	if (a_3 f== b_3) goto <set_lane3>;
+	goto <done>;
+	<set_lane3>
+	mask_3 = 0xFFFFFFFF;
+	<done>
+
+	vregD_21_25[96,32] = mask_0;
+	vregD_21_25[64,32] = mask_1;
+	vregD_21_25[32,32] = mask_2;
+	vregD_21_25[0,32] = mask_3;
+}
+
+# 000110AAAAABBBBBCCCCCB0001B0AACC
+# vcmpeqfp128. vr0, vr0, vr0 - Compare Equal Floating Point (with CR update)
+:vcmpeqfp128. vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b0001 & opcode_04_04=0b0
+{
+	# Lane-wise FP compare equal: mask is 0xFFFFFFFF when true, 0x00000000 when false
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local a_3:4 = vregA_16_20[0,32];
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+
+	local mask_0:4 = 0;
+	if (a_0 f== b_0) goto <set_lane0>;
+	goto <lane1>;
+	<set_lane0>
+	mask_0 = 0xFFFFFFFF;
+	<lane1>
+
+	local mask_1:4 = 0;
+	if (a_1 f== b_1) goto <set_lane1>;
+	goto <lane2>;
+	<set_lane1>
+	mask_1 = 0xFFFFFFFF;
+	<lane2>
+
+	local mask_2:4 = 0;
+	if (a_2 f== b_2) goto <set_lane2>;
+	goto <lane3>;
+	<set_lane2>
+	mask_2 = 0xFFFFFFFF;
+	<lane3>
+
+	local mask_3:4 = 0;
+	if (a_3 f== b_3) goto <set_lane3>;
+	goto <done>;
+	<set_lane3>
+	mask_3 = 0xFFFFFFFF;
+	<done>
+
+	vregD_21_25[96,32] = mask_0;
+	vregD_21_25[64,32] = mask_1;
+	vregD_21_25[32,32] = mask_2;
+	vregD_21_25[0,32] = mask_3;
+
+	local all_true:1 = (mask_0 == 0xFFFFFFFF) && (mask_1 == 0xFFFFFFFF) && (mask_2 == 0xFFFFFFFF) && (mask_3 == 0xFFFFFFFF);
+	local all_false:1 = (mask_0 == 0) && (mask_1 == 0) && (mask_2 == 0) && (mask_3 == 0);
+	setCrBit(cr6, 0, all_true);
+	setCrBit(cr6, 1, 0);
+	setCrBit(cr6, 2, all_false);
+	setCrBit(cr6, 3, 0);
+}
+
+# 000110AAAAABBBBBCCCCCB1000B0AACC
+# vcmpequw128 vr0, vr0, vr0 - Compare Equal Unsigned Word
+:vcmpequw128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b1000 & opcode_04_04=0b0
+{
+	# Lane-wise unsigned word compare equal: mask is 0xFFFFFFFF when true, 0x00000000 when false
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local a_3:4 = vregA_16_20[0,32];
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+
+	local mask_0:4 = 0;
+	if (a_0 == b_0) goto <set_lane0>;
+	goto <lane1>;
+	<set_lane0>
+	mask_0 = 0xFFFFFFFF;
+	<lane1>
+
+	local mask_1:4 = 0;
+	if (a_1 == b_1) goto <set_lane1>;
+	goto <lane2>;
+	<set_lane1>
+	mask_1 = 0xFFFFFFFF;
+	<lane2>
+
+	local mask_2:4 = 0;
+	if (a_2 == b_2) goto <set_lane2>;
+	goto <lane3>;
+	<set_lane2>
+	mask_2 = 0xFFFFFFFF;
+	<lane3>
+
+	local mask_3:4 = 0;
+	if (a_3 == b_3) goto <set_lane3>;
+	goto <done>;
+	<set_lane3>
+	mask_3 = 0xFFFFFFFF;
+	<done>
+
+	vregD_21_25[96,32] = mask_0;
+	vregD_21_25[64,32] = mask_1;
+	vregD_21_25[32,32] = mask_2;
+	vregD_21_25[0,32] = mask_3;
+}
+
+# 000110AAAAABBBBBCCCCCB1001B0AACC
+# vcmpequw128. vr0, vr0, vr0 - Compare Equal Unsigned Word (with CR update)
+:vcmpequw128. vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b1001 & opcode_04_04=0b0
+{
+	# Lane-wise unsigned word compare equal: mask is 0xFFFFFFFF when true, 0x00000000 when false
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local a_3:4 = vregA_16_20[0,32];
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+
+	local mask_0:4 = 0;
+	if (a_0 == b_0) goto <set_lane0>;
+	goto <lane1>;
+	<set_lane0>
+	mask_0 = 0xFFFFFFFF;
+	<lane1>
+
+	local mask_1:4 = 0;
+	if (a_1 == b_1) goto <set_lane1>;
+	goto <lane2>;
+	<set_lane1>
+	mask_1 = 0xFFFFFFFF;
+	<lane2>
+
+	local mask_2:4 = 0;
+	if (a_2 == b_2) goto <set_lane2>;
+	goto <lane3>;
+	<set_lane2>
+	mask_2 = 0xFFFFFFFF;
+	<lane3>
+
+	local mask_3:4 = 0;
+	if (a_3 == b_3) goto <set_lane3>;
+	goto <done>;
+	<set_lane3>
+	mask_3 = 0xFFFFFFFF;
+	<done>
+
+	vregD_21_25[96,32] = mask_0;
+	vregD_21_25[64,32] = mask_1;
+	vregD_21_25[32,32] = mask_2;
+	vregD_21_25[0,32] = mask_3;
+
+	local all_true:1 = (mask_0 == 0xFFFFFFFF) && (mask_1 == 0xFFFFFFFF) && (mask_2 == 0xFFFFFFFF) && (mask_3 == 0xFFFFFFFF);
+	local all_false:1 = (mask_0 == 0) && (mask_1 == 0) && (mask_2 == 0) && (mask_3 == 0);
+	setCrBit(cr6, 0, all_true);
+	setCrBit(cr6, 1, 0);
+	setCrBit(cr6, 2, all_false);
+	setCrBit(cr6, 3, 0);
+}
+
+# 000110AAAAABBBBBCCCCCB0010B0AACC
+# vcmpgefp128 vr0, vr0, vr0 - Compare Greater-Than-or-Equal Floating Point
+:vcmpgefp128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b0010 & opcode_04_04=0b0
+{
+	# Lane-wise FP compare greater-equal: mask is 0xFFFFFFFF when true, 0x00000000 when false
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local a_3:4 = vregA_16_20[0,32];
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+
+	local mask_0:4 = 0;
+	if (a_0 f>= b_0) goto <set_lane0>;
+	goto <lane1>;
+	<set_lane0>
+	mask_0 = 0xFFFFFFFF;
+	<lane1>
+
+	local mask_1:4 = 0;
+	if (a_1 f>= b_1) goto <set_lane1>;
+	goto <lane2>;
+	<set_lane1>
+	mask_1 = 0xFFFFFFFF;
+	<lane2>
+
+	local mask_2:4 = 0;
+	if (a_2 f>= b_2) goto <set_lane2>;
+	goto <lane3>;
+	<set_lane2>
+	mask_2 = 0xFFFFFFFF;
+	<lane3>
+
+	local mask_3:4 = 0;
+	if (a_3 f>= b_3) goto <set_lane3>;
+	goto <done>;
+	<set_lane3>
+	mask_3 = 0xFFFFFFFF;
+	<done>
+
+	vregD_21_25[96,32] = mask_0;
+	vregD_21_25[64,32] = mask_1;
+	vregD_21_25[32,32] = mask_2;
+	vregD_21_25[0,32] = mask_3;
+}
+
+# 000110AAAAABBBBBCCCCCB0011B0AACC
+# vcmpgefp128. vr0, vr0, vr0 - Compare Greater-Than-or-Equal Floating Point (with CR update)
+:vcmpgefp128. vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b0011 & opcode_04_04=0b0
+{
+	# Lane-wise FP compare greater-equal: mask is 0xFFFFFFFF when true, 0x00000000 when false
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local a_3:4 = vregA_16_20[0,32];
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+
+	local mask_0:4 = 0;
+	if (a_0 f>= b_0) goto <set_lane0>;
+	goto <lane1>;
+	<set_lane0>
+	mask_0 = 0xFFFFFFFF;
+	<lane1>
+
+	local mask_1:4 = 0;
+	if (a_1 f>= b_1) goto <set_lane1>;
+	goto <lane2>;
+	<set_lane1>
+	mask_1 = 0xFFFFFFFF;
+	<lane2>
+
+	local mask_2:4 = 0;
+	if (a_2 f>= b_2) goto <set_lane2>;
+	goto <lane3>;
+	<set_lane2>
+	mask_2 = 0xFFFFFFFF;
+	<lane3>
+
+	local mask_3:4 = 0;
+	if (a_3 f>= b_3) goto <set_lane3>;
+	goto <done>;
+	<set_lane3>
+	mask_3 = 0xFFFFFFFF;
+	<done>
+
+	vregD_21_25[96,32] = mask_0;
+	vregD_21_25[64,32] = mask_1;
+	vregD_21_25[32,32] = mask_2;
+	vregD_21_25[0,32] = mask_3;
+
+	local all_true:1 = (mask_0 == 0xFFFFFFFF) && (mask_1 == 0xFFFFFFFF) && (mask_2 == 0xFFFFFFFF) && (mask_3 == 0xFFFFFFFF);
+	local all_false:1 = (mask_0 == 0) && (mask_1 == 0) && (mask_2 == 0) && (mask_3 == 0);
+	setCrBit(cr6, 0, all_true);
+	setCrBit(cr6, 1, 0);
+	setCrBit(cr6, 2, all_false);
+	setCrBit(cr6, 3, 0);
+}
+
+# 000110AAAAABBBBBCCCCCB0100B0AACC
+# vcmpgtfp128 vr0, vr0, vr0 - Compare Greater-Than Floating Point
+:vcmpgtfp128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b0100 & opcode_04_04=0b0
+{
+	# Lane-wise FP compare greater-than: mask is 0xFFFFFFFF when true, 0x00000000 when false
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local a_3:4 = vregA_16_20[0,32];
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+
+	local mask_0:4 = 0;
+	if (a_0 f> b_0) goto <set_lane0>;
+	goto <lane1>;
+	<set_lane0>
+	mask_0 = 0xFFFFFFFF;
+	<lane1>
+
+	local mask_1:4 = 0;
+	if (a_1 f> b_1) goto <set_lane1>;
+	goto <lane2>;
+	<set_lane1>
+	mask_1 = 0xFFFFFFFF;
+	<lane2>
+
+	local mask_2:4 = 0;
+	if (a_2 f> b_2) goto <set_lane2>;
+	goto <lane3>;
+	<set_lane2>
+	mask_2 = 0xFFFFFFFF;
+	<lane3>
+
+	local mask_3:4 = 0;
+	if (a_3 f> b_3) goto <set_lane3>;
+	goto <done>;
+	<set_lane3>
+	mask_3 = 0xFFFFFFFF;
+	<done>
+
+	vregD_21_25[96,32] = mask_0;
+	vregD_21_25[64,32] = mask_1;
+	vregD_21_25[32,32] = mask_2;
+	vregD_21_25[0,32] = mask_3;
+}
+
+# 000110AAAAABBBBBCCCCCB0101B0AACC
+# vcmpgtfp128. vr0, vr0, vr0 - Compare Greater-Than Floating Point (with CR update)
+:vcmpgtfp128. vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b0101 & opcode_04_04=0b0
+{
+	# Lane-wise FP compare greater-than: mask is 0xFFFFFFFF when true, 0x00000000 when false
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local a_3:4 = vregA_16_20[0,32];
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+
+	local mask_0:4 = 0;
+	if (a_0 f> b_0) goto <set_lane0>;
+	goto <lane1>;
+	<set_lane0>
+	mask_0 = 0xFFFFFFFF;
+	<lane1>
+
+	local mask_1:4 = 0;
+	if (a_1 f> b_1) goto <set_lane1>;
+	goto <lane2>;
+	<set_lane1>
+	mask_1 = 0xFFFFFFFF;
+	<lane2>
+
+	local mask_2:4 = 0;
+	if (a_2 f> b_2) goto <set_lane2>;
+	goto <lane3>;
+	<set_lane2>
+	mask_2 = 0xFFFFFFFF;
+	<lane3>
+
+	local mask_3:4 = 0;
+	if (a_3 f> b_3) goto <set_lane3>;
+	goto <done>;
+	<set_lane3>
+	mask_3 = 0xFFFFFFFF;
+	<done>
+
+	vregD_21_25[96,32] = mask_0;
+	vregD_21_25[64,32] = mask_1;
+	vregD_21_25[32,32] = mask_2;
+	vregD_21_25[0,32] = mask_3;
+
+	local all_true:1 = (mask_0 == 0xFFFFFFFF) && (mask_1 == 0xFFFFFFFF) && (mask_2 == 0xFFFFFFFF) && (mask_3 == 0xFFFFFFFF);
+	local all_false:1 = (mask_0 == 0) && (mask_1 == 0) && (mask_2 == 0) && (mask_3 == 0);
+	setCrBit(cr6, 0, all_true);
+	setCrBit(cr6, 1, 0);
+	setCrBit(cr6, 2, all_false);
+	setCrBit(cr6, 3, 0);
+}
+
+# 000110AAAAAsssssBBBBB0101011AABB
+# vcsxwfp128 vr0, vr0, SIMM - Convert Signed Fixed-Point to Floating Point
+:vcsxwfp128 vregD_21_25, simm_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & simm_16_20 & vregB_11_15 & opcode_04_10=0b0101011
+{
+	vregD_21_25 = vectorConvertFromSignedFixedPoint128(vregB_11_15, simm_16_20:1);
+}
+
+# 000110AAAAAsssssBBBBB0101111AABB
+# vcuxwfp128 vr0, vr0, UIMM - Convert Unsigned Fixed-Point to Floating Point
+:vcuxwfp128 vregD_21_25, uimm_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & uimm_16_20 & vregB_11_15 & opcode_04_10=0b0101111
+{
+	vregD_21_25 = vectorConvertFromUnsignedFixedPoint128(vregB_11_15, uimm_16_20:1);
+}
+
+# 000110AAAAA00000CCCCC1101011AACC
+# vexptefp128 vr0, vr0 - 2^x Estimate Floating Point
+:vexptefp128 vregD_21_25, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & opcode_16_20=0b00000 & vregB_11_15 & opcode_04_10=0b1101011
+{
+	vregD_21_25 = vector2RaisedToExponentEstimate128(vregB_11_15);
+}
+
+# 000110AAAAA00000CCCCC1101111AACC
+# vlogefp128 vr0, vr0 - Log2 Estimate Floating Point
+:vlogefp128 vregD_21_25, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & opcode_16_20=0b00000 & vregB_11_15 & opcode_04_10=0b1101111
+{
+	vregD_21_25 = vectorLog2Estimate128(vregB_11_15);
+}
+
+# 000101AAAAABBBBBCCCCCB0100B1AACC
+# vmaddcfp128 vr0, vr0, vr0 - Multiply-Add Carryout Floating Point
+# Operation: vD = vA * vD + vB (vD is both source multiplicand and destination)
+:vmaddcfp128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b0100 & opcode_04_04=0b1
+{
+	# Lane-wise FP multiply-add carryout: vD[i] = vA[i] * vD[i] + vB[i] for each 32-bit float lane
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local a_3:4 = vregA_16_20[0,32];
+	local d_0:4 = vregD_21_25[96,32];
+	local d_1:4 = vregD_21_25[64,32];
+	local d_2:4 = vregD_21_25[32,32];
+	local d_3:4 = vregD_21_25[0,32];
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+	local res_0:4 = (a_0 f* d_0) f+ b_0;
+	local res_1:4 = (a_1 f* d_1) f+ b_1;
+	local res_2:4 = (a_2 f* d_2) f+ b_2;
+	local res_3:4 = (a_3 f* d_3) f+ b_3;
+	vregD_21_25[96,32] = res_0;
+	vregD_21_25[64,32] = res_1;
+	vregD_21_25[32,32] = res_2;
+	vregD_21_25[0,32] = res_3;
+}
+
+# 000101AAAAABBBBBCCCCCB0011B1AACC
+# vmaddfp128 vr0, vr0, vr0 - Multiply-Add Floating Point (vD = vA * vB + vD)
+:vmaddfp128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b0011 & opcode_04_04=0b1
+{
+	# Lane-wise FP multiply-add: vD[i] = vA[i] * vB[i] + vD[i] for each 32-bit float lane
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local a_3:4 = vregA_16_20[0,32];
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+	local d_0:4 = vregD_21_25[96,32];
+	local d_1:4 = vregD_21_25[64,32];
+	local d_2:4 = vregD_21_25[32,32];
+	local d_3:4 = vregD_21_25[0,32];
+	local res_0:4 = (a_0 f* b_0) f+ d_0;
+	local res_1:4 = (a_1 f* b_1) f+ d_1;
+	local res_2:4 = (a_2 f* b_2) f+ d_2;
+	local res_3:4 = (a_3 f* b_3) f+ d_3;
+	vregD_21_25[96,32] = res_0;
+	vregD_21_25[64,32] = res_1;
+	vregD_21_25[32,32] = res_2;
+	vregD_21_25[0,32] = res_3;
+}
+
+# 000110AAAAABBBBBCCCCCB1010B0AACC
+# vmaxfp128 vr0, vr0, vr0 - Maximum Floating Point
+# Operation: vD[i] = max(vA[i], vB[i]) for each 32-bit float lane
+:vmaxfp128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b1010 & opcode_04_04=0b0
+{
+	# Lane-wise FP maximum: vD[i] = max(vA[i], vB[i])
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local a_3:4 = vregA_16_20[0,32];
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+
+	# Lane 0: max(a_0, b_0)
+	local res_0:4 = a_0;
+	if (a_0 f>= b_0) goto <lane1>;
+	res_0 = b_0;
+	<lane1>
+
+	# Lane 1: max(a_1, b_1)
+	local res_1:4 = a_1;
+	if (a_1 f>= b_1) goto <lane2>;
+	res_1 = b_1;
+	<lane2>
+
+	# Lane 2: max(a_2, b_2)
+	local res_2:4 = a_2;
+	if (a_2 f>= b_2) goto <lane3>;
+	res_2 = b_2;
+	<lane3>
+
+	# Lane 3: max(a_3, b_3)
+	local res_3:4 = a_3;
+	if (a_3 f>= b_3) goto <done>;
+	res_3 = b_3;
+	<done>
+
+	vregD_21_25[96,32] = res_0;
+	vregD_21_25[64,32] = res_1;
+	vregD_21_25[32,32] = res_2;
+	vregD_21_25[0,32] = res_3;
+}
+
+# 000110AAAAABBBBBCCCCCB1011B0AACC
+# vminfp128 vr0, vr0, vr0 - Minimum Floating Point
+# Operation: vD[i] = min(vA[i], vB[i]) for each 32-bit float lane
+:vminfp128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b1011 & opcode_04_04=0b0
+{
+	# Lane-wise FP minimum: vD[i] = min(vA[i], vB[i])
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local a_3:4 = vregA_16_20[0,32];
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+
+	# Lane 0: min(a_0, b_0)
+	local res_0:4 = a_0;
+	if (a_0 f<= b_0) goto <lane1>;
+	res_0 = b_0;
+	<lane1>
+
+	# Lane 1: min(a_1, b_1)
+	local res_1:4 = a_1;
+	if (a_1 f<= b_1) goto <lane2>;
+	res_1 = b_1;
+	<lane2>
+
+	# Lane 2: min(a_2, b_2)
+	local res_2:4 = a_2;
+	if (a_2 f<= b_2) goto <lane3>;
+	res_2 = b_2;
+	<lane3>
+
+	# Lane 3: min(a_3, b_3)
+	local res_3:4 = a_3;
+	if (a_3 f<= b_3) goto <done>;
+	res_3 = b_3;
+	<done>
+
+	vregD_21_25[96,32] = res_0;
+	vregD_21_25[64,32] = res_1;
+	vregD_21_25[32,32] = res_2;
+	vregD_21_25[0,32] = res_3;
+}
+
+# 000110AAAAABBBBBCCCCCB1100B0AACC
+# vmrghw128 vr0, vr0, vr0 - Merge High Word
+:vmrghw128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b1100 & opcode_04_04=0b0
+{
+	# Interleave high words: A0,B0,A1,B1
+	vregD_21_25[96,32] = vregA_16_20[96,32];
+	vregD_21_25[64,32] = vregB_11_15[96,32];
+	vregD_21_25[32,32] = vregA_16_20[64,32];
+	vregD_21_25[0,32] = vregB_11_15[64,32];
+}
+
+# 000110AAAAABBBBBCCCCCB1101B0AACC
+# vmrglw128 vr0, vr0, vr0 - Merge Low Word
+:vmrglw128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b1101 & opcode_04_04=0b0
+{
+	# Interleave low words: A2,B2,A3,B3
+	vregD_21_25[96,32] = vregA_16_20[32,32];
+	vregD_21_25[64,32] = vregB_11_15[32,32];
+	vregD_21_25[32,32] = vregA_16_20[0,32];
+	vregD_21_25[0,32] = vregB_11_15[0,32];
+}
+
+# 000101AAAAABBBBBCCCCCB0110B1AACC
+# vmsum3fp128 vr0, vr0, vr0 - Dot Product 3D (x*x + y*y + z*z)
+:vmsum3fp128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b0110 & opcode_04_04=0b1
+{
+	# 3D dot product, result splatted to all lanes
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local sum:4 = (a_0 f* b_0) f+ (a_1 f* b_1) f+ (a_2 f* b_2);
+	vregD_21_25[96,32] = sum;
+	vregD_21_25[64,32] = sum;
+	vregD_21_25[32,32] = sum;
+	vregD_21_25[0,32] = sum;
+}
+
+# 000101AAAAABBBBBCCCCCB0111B1AACC
+# vmsum4fp128 vr0, vr0, vr0 - Dot Product 4D (x*x + y*y + z*z + w*w)
+:vmsum4fp128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b0111 & opcode_04_04=0b1
+{
+	# 4D dot product, result splatted to all lanes
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local a_3:4 = vregA_16_20[0,32];
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+	local sum:4 = (a_0 f* b_0) f+ (a_1 f* b_1) f+ (a_2 f* b_2) f+ (a_3 f* b_3);
+	vregD_21_25[96,32] = sum;
+	vregD_21_25[64,32] = sum;
+	vregD_21_25[32,32] = sum;
+	vregD_21_25[0,32] = sum;
+}
+
+# 000101AAAAABBBBBCCCCCB0010B1AACC
+# vmulfp128 vr0, vr0, vr0 - Multiply Floating Point
+:vmulfp128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b0010 & opcode_04_04=0b1
+{
+	# Lane-wise FP multiply: vD[i] = vA[i] * vB[i] for each 32-bit float lane
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local a_3:4 = vregA_16_20[0,32];
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+	local res_0:4 = a_0 f* b_0;
+	local res_1:4 = a_1 f* b_1;
+	local res_2:4 = a_2 f* b_2;
+	local res_3:4 = a_3 f* b_3;
+	vregD_21_25[96,32] = res_0;
+	vregD_21_25[64,32] = res_1;
+	vregD_21_25[32,32] = res_2;
+	vregD_21_25[0,32] = res_3;
+}
+
+# 000101AAAAABBBBBCCCCCB0101B1AACC
+# vnmsubfp128 vr0, vr0, vr0 - Negative Multiply-Subtract Floating Point
+# Operation: vD = -(vA * vB - vD) = vD - vA * vB
+:vnmsubfp128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b0101 & opcode_04_04=0b1
+{
+	# Lane-wise FP negative multiply-subtract: vD[i] = vD[i] - vA[i] * vB[i]
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local a_3:4 = vregA_16_20[0,32];
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+	local d_0:4 = vregD_21_25[96,32];
+	local d_1:4 = vregD_21_25[64,32];
+	local d_2:4 = vregD_21_25[32,32];
+	local d_3:4 = vregD_21_25[0,32];
+	local res_0:4 = d_0 f- (a_0 f* b_0);
+	local res_1:4 = d_1 f- (a_1 f* b_1);
+	local res_2:4 = d_2 f- (a_2 f* b_2);
+	local res_3:4 = d_3 f- (a_3 f* b_3);
+	vregD_21_25[96,32] = res_0;
+	vregD_21_25[64,32] = res_1;
+	vregD_21_25[32,32] = res_2;
+	vregD_21_25[0,32] = res_3;
+}
+
+# 000101AAAAABBBBBCCCCCB1010B1AACC
+# vnor128 vr0, vr0, vr0 - Logical NOR
+:vnor128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b1010 & opcode_04_04=0b1
+{
+	vregD_21_25 = ~(vregA_16_20 | vregB_11_15);
+}
+
+# 000101AAAAABBBBBCCCCCB1011B1AACC
+# vor128 vr0, vr0, vr0 - Logical OR
+:vor128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b1011 & opcode_04_04=0b1
+{
+	vregD_21_25 = vregA_16_20 | vregB_11_15;
+}
+
+# 000101AAAAABBBBBCCCCCB0DDDB0AACC
+# vperm128 vr0, vr0, vr0, vr0 - Permutation
+:vperm128 vregD_21_25, vregA_16_20, vregB_11_15, vregC_06_08 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_09_09=0b0 & vregC_06_08 & opcode_04_04=0b0
+{
+	# Byte-wise permute from vA/vB using vC selectors (low 5 bits per byte)
+	local sel_0:1 = vregC_06_08[120,8] & 0x1F;
+	local idx_0:1 = sel_0 & 0xF;
+	local shift_0:1 = (15 - idx_0) * 8;
+	local src_a_0:16 = vregA_16_20 >> zext(shift_0);
+	local src_b_0:16 = vregB_11_15 >> zext(shift_0);
+	local byte_0:1 = src_a_0:1;
+	if ((sel_0 & 0x10) == 0) goto <perm0_done>;
+	byte_0 = src_b_0:1;
+	<perm0_done>
+	vregD_21_25[120,8] = byte_0;
+
+	local sel_1:1 = vregC_06_08[112,8] & 0x1F;
+	local idx_1:1 = sel_1 & 0xF;
+	local shift_1:1 = (15 - idx_1) * 8;
+	local src_a_1:16 = vregA_16_20 >> zext(shift_1);
+	local src_b_1:16 = vregB_11_15 >> zext(shift_1);
+	local byte_1:1 = src_a_1:1;
+	if ((sel_1 & 0x10) == 0) goto <perm1_done>;
+	byte_1 = src_b_1:1;
+	<perm1_done>
+	vregD_21_25[112,8] = byte_1;
+
+	local sel_2:1 = vregC_06_08[104,8] & 0x1F;
+	local idx_2:1 = sel_2 & 0xF;
+	local shift_2:1 = (15 - idx_2) * 8;
+	local src_a_2:16 = vregA_16_20 >> zext(shift_2);
+	local src_b_2:16 = vregB_11_15 >> zext(shift_2);
+	local byte_2:1 = src_a_2:1;
+	if ((sel_2 & 0x10) == 0) goto <perm2_done>;
+	byte_2 = src_b_2:1;
+	<perm2_done>
+	vregD_21_25[104,8] = byte_2;
+
+	local sel_3:1 = vregC_06_08[96,8] & 0x1F;
+	local idx_3:1 = sel_3 & 0xF;
+	local shift_3:1 = (15 - idx_3) * 8;
+	local src_a_3:16 = vregA_16_20 >> zext(shift_3);
+	local src_b_3:16 = vregB_11_15 >> zext(shift_3);
+	local byte_3:1 = src_a_3:1;
+	if ((sel_3 & 0x10) == 0) goto <perm3_done>;
+	byte_3 = src_b_3:1;
+	<perm3_done>
+	vregD_21_25[96,8] = byte_3;
+
+	local sel_4:1 = vregC_06_08[88,8] & 0x1F;
+	local idx_4:1 = sel_4 & 0xF;
+	local shift_4:1 = (15 - idx_4) * 8;
+	local src_a_4:16 = vregA_16_20 >> zext(shift_4);
+	local src_b_4:16 = vregB_11_15 >> zext(shift_4);
+	local byte_4:1 = src_a_4:1;
+	if ((sel_4 & 0x10) == 0) goto <perm4_done>;
+	byte_4 = src_b_4:1;
+	<perm4_done>
+	vregD_21_25[88,8] = byte_4;
+
+	local sel_5:1 = vregC_06_08[80,8] & 0x1F;
+	local idx_5:1 = sel_5 & 0xF;
+	local shift_5:1 = (15 - idx_5) * 8;
+	local src_a_5:16 = vregA_16_20 >> zext(shift_5);
+	local src_b_5:16 = vregB_11_15 >> zext(shift_5);
+	local byte_5:1 = src_a_5:1;
+	if ((sel_5 & 0x10) == 0) goto <perm5_done>;
+	byte_5 = src_b_5:1;
+	<perm5_done>
+	vregD_21_25[80,8] = byte_5;
+
+	local sel_6:1 = vregC_06_08[72,8] & 0x1F;
+	local idx_6:1 = sel_6 & 0xF;
+	local shift_6:1 = (15 - idx_6) * 8;
+	local src_a_6:16 = vregA_16_20 >> zext(shift_6);
+	local src_b_6:16 = vregB_11_15 >> zext(shift_6);
+	local byte_6:1 = src_a_6:1;
+	if ((sel_6 & 0x10) == 0) goto <perm6_done>;
+	byte_6 = src_b_6:1;
+	<perm6_done>
+	vregD_21_25[72,8] = byte_6;
+
+	local sel_7:1 = vregC_06_08[64,8] & 0x1F;
+	local idx_7:1 = sel_7 & 0xF;
+	local shift_7:1 = (15 - idx_7) * 8;
+	local src_a_7:16 = vregA_16_20 >> zext(shift_7);
+	local src_b_7:16 = vregB_11_15 >> zext(shift_7);
+	local byte_7:1 = src_a_7:1;
+	if ((sel_7 & 0x10) == 0) goto <perm7_done>;
+	byte_7 = src_b_7:1;
+	<perm7_done>
+	vregD_21_25[64,8] = byte_7;
+
+	local sel_8:1 = vregC_06_08[56,8] & 0x1F;
+	local idx_8:1 = sel_8 & 0xF;
+	local shift_8:1 = (15 - idx_8) * 8;
+	local src_a_8:16 = vregA_16_20 >> zext(shift_8);
+	local src_b_8:16 = vregB_11_15 >> zext(shift_8);
+	local byte_8:1 = src_a_8:1;
+	if ((sel_8 & 0x10) == 0) goto <perm8_done>;
+	byte_8 = src_b_8:1;
+	<perm8_done>
+	vregD_21_25[56,8] = byte_8;
+
+	local sel_9:1 = vregC_06_08[48,8] & 0x1F;
+	local idx_9:1 = sel_9 & 0xF;
+	local shift_9:1 = (15 - idx_9) * 8;
+	local src_a_9:16 = vregA_16_20 >> zext(shift_9);
+	local src_b_9:16 = vregB_11_15 >> zext(shift_9);
+	local byte_9:1 = src_a_9:1;
+	if ((sel_9 & 0x10) == 0) goto <perm9_done>;
+	byte_9 = src_b_9:1;
+	<perm9_done>
+	vregD_21_25[48,8] = byte_9;
+
+	local sel_10:1 = vregC_06_08[40,8] & 0x1F;
+	local idx_10:1 = sel_10 & 0xF;
+	local shift_10:1 = (15 - idx_10) * 8;
+	local src_a_10:16 = vregA_16_20 >> zext(shift_10);
+	local src_b_10:16 = vregB_11_15 >> zext(shift_10);
+	local byte_10:1 = src_a_10:1;
+	if ((sel_10 & 0x10) == 0) goto <perm10_done>;
+	byte_10 = src_b_10:1;
+	<perm10_done>
+	vregD_21_25[40,8] = byte_10;
+
+	local sel_11:1 = vregC_06_08[32,8] & 0x1F;
+	local idx_11:1 = sel_11 & 0xF;
+	local shift_11:1 = (15 - idx_11) * 8;
+	local src_a_11:16 = vregA_16_20 >> zext(shift_11);
+	local src_b_11:16 = vregB_11_15 >> zext(shift_11);
+	local byte_11:1 = src_a_11:1;
+	if ((sel_11 & 0x10) == 0) goto <perm11_done>;
+	byte_11 = src_b_11:1;
+	<perm11_done>
+	vregD_21_25[32,8] = byte_11;
+
+	local sel_12:1 = vregC_06_08[24,8] & 0x1F;
+	local idx_12:1 = sel_12 & 0xF;
+	local shift_12:1 = (15 - idx_12) * 8;
+	local src_a_12:16 = vregA_16_20 >> zext(shift_12);
+	local src_b_12:16 = vregB_11_15 >> zext(shift_12);
+	local byte_12:1 = src_a_12:1;
+	if ((sel_12 & 0x10) == 0) goto <perm12_done>;
+	byte_12 = src_b_12:1;
+	<perm12_done>
+	vregD_21_25[24,8] = byte_12;
+
+	local sel_13:1 = vregC_06_08[16,8] & 0x1F;
+	local idx_13:1 = sel_13 & 0xF;
+	local shift_13:1 = (15 - idx_13) * 8;
+	local src_a_13:16 = vregA_16_20 >> zext(shift_13);
+	local src_b_13:16 = vregB_11_15 >> zext(shift_13);
+	local byte_13:1 = src_a_13:1;
+	if ((sel_13 & 0x10) == 0) goto <perm13_done>;
+	byte_13 = src_b_13:1;
+	<perm13_done>
+	vregD_21_25[16,8] = byte_13;
+
+	local sel_14:1 = vregC_06_08[8,8] & 0x1F;
+	local idx_14:1 = sel_14 & 0xF;
+	local shift_14:1 = (15 - idx_14) * 8;
+	local src_a_14:16 = vregA_16_20 >> zext(shift_14);
+	local src_b_14:16 = vregB_11_15 >> zext(shift_14);
+	local byte_14:1 = src_a_14:1;
+	if ((sel_14 & 0x10) == 0) goto <perm14_done>;
+	byte_14 = src_b_14:1;
+	<perm14_done>
+	vregD_21_25[8,8] = byte_14;
+
+	local sel_15:1 = vregC_06_08[0,8] & 0x1F;
+	local idx_15:1 = sel_15 & 0xF;
+	local shift_15:1 = (15 - idx_15) * 8;
+	local src_a_15:16 = vregA_16_20 >> zext(shift_15);
+	local src_b_15:16 = vregB_11_15 >> zext(shift_15);
+	local byte_15:1 = src_a_15:1;
+	if ((sel_15 & 0x10) == 0) goto <perm15_done>;
+	byte_15 = src_b_15:1;
+	<perm15_done>
+	vregD_21_25[0,8] = byte_15;
+}
+
+# 000110AAAAApppppCCCCC01ppp01AACC
+# vpermwi128 vD, vB, PERM - Permute Word Immediate
+# PERM is an 8-bit immediate encoding word permutation (high 3 bits at 6-8, low 5 bits at 11-15)
+:vpermwi128 vregD_21_25, vregB_11_15, perm128 is opcode_26_31=0b000110 & vregD_21_25 & vregB_11_15 & perm128 & opcode_09_10=0b01 & opcode_04_05=0b01
+{
+	local perm:1 = perm128;
+	local sel_0:1 = perm & 0x3;
+	local sel_1:1 = (perm >> 2) & 0x3;
+	local sel_2:1 = (perm >> 4) & 0x3;
+	local sel_3:1 = (perm >> 6) & 0x3;
+	local shift_0:1 = (3 - sel_0) * 32;
+	local shift_1:1 = (3 - sel_1) * 32;
+	local shift_2:1 = (3 - sel_2) * 32;
+	local shift_3:1 = (3 - sel_3) * 32;
+	local src_0:16 = vregB_11_15 >> zext(shift_0);
+	local src_1:16 = vregB_11_15 >> zext(shift_1);
+	local src_2:16 = vregB_11_15 >> zext(shift_2);
+	local src_3:16 = vregB_11_15 >> zext(shift_3);
+	vregD_21_25[96,32] = src_0:4;
+	vregD_21_25[64,32] = src_1:4;
+	vregD_21_25[32,32] = src_2:4;
+	vregD_21_25[0,32] = src_3:4;
+}
+
+# 000110AAAAAtttmmCCCCC110zz01AACC
+# vpkd3d128 vD, vB, D3DType, VMASK, Zimm - Pack D3D Type (Xbox 360 specific)
+# D3DType (bits 18-20): packed data type (3 bits)
+# VMASK (bits 16-17): pack mask (2 bits)
+# Zimm (bits 6-7): rotate/shift amount (2 bits)
+# Note: Uses pcodeop stub - full semantics too complex for SLEIGH
+:vpkd3d128 vregD_21_25, vregB_11_15, d3dtype_18_20, vmask_16_17, zimm_06_07 is opcode_26_31=0b000110 & vregD_21_25 & vregB_11_15 & d3dtype_18_20 & vmask_16_17 & zimm_06_07 & opcode_08_10=0b110 & opcode_04_05=0b01
+{
+	vregD_21_25 = vectorPackD3D128(vregB_11_15, d3dtype_18_20:1, vmask_16_17:1, zimm_06_07:1);
+}
+
+# 000101AAAAABBBBBCCCCCB1000B0AACC
+# vpkshss128 vr0, vr0, vr0 - Pack Signed Half Word Signed Saturate
+:vpkshss128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b1000 & opcode_04_04=0b0
+{
+	local a0:2 = vregA_16_20[112,16];
+	local res0:1 = a0:1;
+	if (a0 s< -128) goto <vpkshss_a0_min>;
+	if (a0 s> 127) goto <vpkshss_a0_max>;
+	goto <vpkshss_a0_done>;
+<vpkshss_a0_min>
+	res0 =0x80;
+	goto <vpkshss_a0_done>;
+<vpkshss_a0_max>
+	res0 =0x7F;
+<vpkshss_a0_done>
+	local a1:2 = vregA_16_20[96,16];
+	local res1:1 = a1:1;
+	if (a1 s< -128) goto <vpkshss_a1_min>;
+	if (a1 s> 127) goto <vpkshss_a1_max>;
+	goto <vpkshss_a1_done>;
+<vpkshss_a1_min>
+	res1 =0x80;
+	goto <vpkshss_a1_done>;
+<vpkshss_a1_max>
+	res1 =0x7F;
+<vpkshss_a1_done>
+	local a2:2 = vregA_16_20[80,16];
+	local res2:1 = a2:1;
+	if (a2 s< -128) goto <vpkshss_a2_min>;
+	if (a2 s> 127) goto <vpkshss_a2_max>;
+	goto <vpkshss_a2_done>;
+<vpkshss_a2_min>
+	res2 =0x80;
+	goto <vpkshss_a2_done>;
+<vpkshss_a2_max>
+	res2 =0x7F;
+<vpkshss_a2_done>
+	local a3:2 = vregA_16_20[64,16];
+	local res3:1 = a3:1;
+	if (a3 s< -128) goto <vpkshss_a3_min>;
+	if (a3 s> 127) goto <vpkshss_a3_max>;
+	goto <vpkshss_a3_done>;
+<vpkshss_a3_min>
+	res3 =0x80;
+	goto <vpkshss_a3_done>;
+<vpkshss_a3_max>
+	res3 =0x7F;
+<vpkshss_a3_done>
+	local a4:2 = vregA_16_20[48,16];
+	local res4:1 = a4:1;
+	if (a4 s< -128) goto <vpkshss_a4_min>;
+	if (a4 s> 127) goto <vpkshss_a4_max>;
+	goto <vpkshss_a4_done>;
+<vpkshss_a4_min>
+	res4 =0x80;
+	goto <vpkshss_a4_done>;
+<vpkshss_a4_max>
+	res4 =0x7F;
+<vpkshss_a4_done>
+	local a5:2 = vregA_16_20[32,16];
+	local res5:1 = a5:1;
+	if (a5 s< -128) goto <vpkshss_a5_min>;
+	if (a5 s> 127) goto <vpkshss_a5_max>;
+	goto <vpkshss_a5_done>;
+<vpkshss_a5_min>
+	res5 =0x80;
+	goto <vpkshss_a5_done>;
+<vpkshss_a5_max>
+	res5 =0x7F;
+<vpkshss_a5_done>
+	local a6:2 = vregA_16_20[16,16];
+	local res6:1 = a6:1;
+	if (a6 s< -128) goto <vpkshss_a6_min>;
+	if (a6 s> 127) goto <vpkshss_a6_max>;
+	goto <vpkshss_a6_done>;
+<vpkshss_a6_min>
+	res6 =0x80;
+	goto <vpkshss_a6_done>;
+<vpkshss_a6_max>
+	res6 =0x7F;
+<vpkshss_a6_done>
+	local a7:2 = vregA_16_20[0,16];
+	local res7:1 = a7:1;
+	if (a7 s< -128) goto <vpkshss_a7_min>;
+	if (a7 s> 127) goto <vpkshss_a7_max>;
+	goto <vpkshss_a7_done>;
+<vpkshss_a7_min>
+	res7 =0x80;
+	goto <vpkshss_a7_done>;
+<vpkshss_a7_max>
+	res7 =0x7F;
+<vpkshss_a7_done>
+	local b0:2 = vregB_11_15[112,16];
+	local res8:1 = b0:1;
+	if (b0 s< -128) goto <vpkshss_b0_min>;
+	if (b0 s> 127) goto <vpkshss_b0_max>;
+	goto <vpkshss_b0_done>;
+<vpkshss_b0_min>
+	res8 =0x80;
+	goto <vpkshss_b0_done>;
+<vpkshss_b0_max>
+	res8 =0x7F;
+<vpkshss_b0_done>
+	local b1:2 = vregB_11_15[96,16];
+	local res9:1 = b1:1;
+	if (b1 s< -128) goto <vpkshss_b1_min>;
+	if (b1 s> 127) goto <vpkshss_b1_max>;
+	goto <vpkshss_b1_done>;
+<vpkshss_b1_min>
+	res9 =0x80;
+	goto <vpkshss_b1_done>;
+<vpkshss_b1_max>
+	res9 =0x7F;
+<vpkshss_b1_done>
+	local b2:2 = vregB_11_15[80,16];
+	local res10:1 = b2:1;
+	if (b2 s< -128) goto <vpkshss_b2_min>;
+	if (b2 s> 127) goto <vpkshss_b2_max>;
+	goto <vpkshss_b2_done>;
+<vpkshss_b2_min>
+	res10 =0x80;
+	goto <vpkshss_b2_done>;
+<vpkshss_b2_max>
+	res10 =0x7F;
+<vpkshss_b2_done>
+	local b3:2 = vregB_11_15[64,16];
+	local res11:1 = b3:1;
+	if (b3 s< -128) goto <vpkshss_b3_min>;
+	if (b3 s> 127) goto <vpkshss_b3_max>;
+	goto <vpkshss_b3_done>;
+<vpkshss_b3_min>
+	res11 =0x80;
+	goto <vpkshss_b3_done>;
+<vpkshss_b3_max>
+	res11 =0x7F;
+<vpkshss_b3_done>
+	local b4:2 = vregB_11_15[48,16];
+	local res12:1 = b4:1;
+	if (b4 s< -128) goto <vpkshss_b4_min>;
+	if (b4 s> 127) goto <vpkshss_b4_max>;
+	goto <vpkshss_b4_done>;
+<vpkshss_b4_min>
+	res12 =0x80;
+	goto <vpkshss_b4_done>;
+<vpkshss_b4_max>
+	res12 =0x7F;
+<vpkshss_b4_done>
+	local b5:2 = vregB_11_15[32,16];
+	local res13:1 = b5:1;
+	if (b5 s< -128) goto <vpkshss_b5_min>;
+	if (b5 s> 127) goto <vpkshss_b5_max>;
+	goto <vpkshss_b5_done>;
+<vpkshss_b5_min>
+	res13 =0x80;
+	goto <vpkshss_b5_done>;
+<vpkshss_b5_max>
+	res13 =0x7F;
+<vpkshss_b5_done>
+	local b6:2 = vregB_11_15[16,16];
+	local res14:1 = b6:1;
+	if (b6 s< -128) goto <vpkshss_b6_min>;
+	if (b6 s> 127) goto <vpkshss_b6_max>;
+	goto <vpkshss_b6_done>;
+<vpkshss_b6_min>
+	res14 =0x80;
+	goto <vpkshss_b6_done>;
+<vpkshss_b6_max>
+	res14 =0x7F;
+<vpkshss_b6_done>
+	local b7:2 = vregB_11_15[0,16];
+	local res15:1 = b7:1;
+	if (b7 s< -128) goto <vpkshss_b7_min>;
+	if (b7 s> 127) goto <vpkshss_b7_max>;
+	goto <vpkshss_b7_done>;
+<vpkshss_b7_min>
+	res15 =0x80;
+	goto <vpkshss_b7_done>;
+<vpkshss_b7_max>
+	res15 =0x7F;
+<vpkshss_b7_done>
+	vregD_21_25[120,8] = res0;
+	vregD_21_25[112,8] = res1;
+	vregD_21_25[104,8] = res2;
+	vregD_21_25[96,8] = res3;
+	vregD_21_25[88,8] = res4;
+	vregD_21_25[80,8] = res5;
+	vregD_21_25[72,8] = res6;
+	vregD_21_25[64,8] = res7;
+	vregD_21_25[56,8] = res8;
+	vregD_21_25[48,8] = res9;
+	vregD_21_25[40,8] = res10;
+	vregD_21_25[32,8] = res11;
+	vregD_21_25[24,8] = res12;
+	vregD_21_25[16,8] = res13;
+	vregD_21_25[8,8] = res14;
+	vregD_21_25[0,8] = res15;
+}
+
+# 000101AAAAABBBBBCCCCCB1001B0AACC
+# vpkshus128 vr0, vr0, vr0 - Pack Signed Half Word Unsigned Saturate
+:vpkshus128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b1001 & opcode_04_04=0b0
+{
+	local a0:2 = vregA_16_20[112,16];
+	local res0:1 = a0:1;
+	if (a0 s< 0) goto <vpkshus_a0_min>;
+	if (a0 s> 255) goto <vpkshus_a0_max>;
+	goto <vpkshus_a0_done>;
+<vpkshus_a0_min>
+	res0 =0x00;
+	goto <vpkshus_a0_done>;
+<vpkshus_a0_max>
+	res0 =0xFF;
+<vpkshus_a0_done>
+	local a1:2 = vregA_16_20[96,16];
+	local res1:1 = a1:1;
+	if (a1 s< 0) goto <vpkshus_a1_min>;
+	if (a1 s> 255) goto <vpkshus_a1_max>;
+	goto <vpkshus_a1_done>;
+<vpkshus_a1_min>
+	res1 =0x00;
+	goto <vpkshus_a1_done>;
+<vpkshus_a1_max>
+	res1 =0xFF;
+<vpkshus_a1_done>
+	local a2:2 = vregA_16_20[80,16];
+	local res2:1 = a2:1;
+	if (a2 s< 0) goto <vpkshus_a2_min>;
+	if (a2 s> 255) goto <vpkshus_a2_max>;
+	goto <vpkshus_a2_done>;
+<vpkshus_a2_min>
+	res2 =0x00;
+	goto <vpkshus_a2_done>;
+<vpkshus_a2_max>
+	res2 =0xFF;
+<vpkshus_a2_done>
+	local a3:2 = vregA_16_20[64,16];
+	local res3:1 = a3:1;
+	if (a3 s< 0) goto <vpkshus_a3_min>;
+	if (a3 s> 255) goto <vpkshus_a3_max>;
+	goto <vpkshus_a3_done>;
+<vpkshus_a3_min>
+	res3 =0x00;
+	goto <vpkshus_a3_done>;
+<vpkshus_a3_max>
+	res3 =0xFF;
+<vpkshus_a3_done>
+	local a4:2 = vregA_16_20[48,16];
+	local res4:1 = a4:1;
+	if (a4 s< 0) goto <vpkshus_a4_min>;
+	if (a4 s> 255) goto <vpkshus_a4_max>;
+	goto <vpkshus_a4_done>;
+<vpkshus_a4_min>
+	res4 =0x00;
+	goto <vpkshus_a4_done>;
+<vpkshus_a4_max>
+	res4 =0xFF;
+<vpkshus_a4_done>
+	local a5:2 = vregA_16_20[32,16];
+	local res5:1 = a5:1;
+	if (a5 s< 0) goto <vpkshus_a5_min>;
+	if (a5 s> 255) goto <vpkshus_a5_max>;
+	goto <vpkshus_a5_done>;
+<vpkshus_a5_min>
+	res5 =0x00;
+	goto <vpkshus_a5_done>;
+<vpkshus_a5_max>
+	res5 =0xFF;
+<vpkshus_a5_done>
+	local a6:2 = vregA_16_20[16,16];
+	local res6:1 = a6:1;
+	if (a6 s< 0) goto <vpkshus_a6_min>;
+	if (a6 s> 255) goto <vpkshus_a6_max>;
+	goto <vpkshus_a6_done>;
+<vpkshus_a6_min>
+	res6 =0x00;
+	goto <vpkshus_a6_done>;
+<vpkshus_a6_max>
+	res6 =0xFF;
+<vpkshus_a6_done>
+	local a7:2 = vregA_16_20[0,16];
+	local res7:1 = a7:1;
+	if (a7 s< 0) goto <vpkshus_a7_min>;
+	if (a7 s> 255) goto <vpkshus_a7_max>;
+	goto <vpkshus_a7_done>;
+<vpkshus_a7_min>
+	res7 =0x00;
+	goto <vpkshus_a7_done>;
+<vpkshus_a7_max>
+	res7 =0xFF;
+<vpkshus_a7_done>
+	local b0:2 = vregB_11_15[112,16];
+	local res8:1 = b0:1;
+	if (b0 s< 0) goto <vpkshus_b0_min>;
+	if (b0 s> 255) goto <vpkshus_b0_max>;
+	goto <vpkshus_b0_done>;
+<vpkshus_b0_min>
+	res8 =0x00;
+	goto <vpkshus_b0_done>;
+<vpkshus_b0_max>
+	res8 =0xFF;
+<vpkshus_b0_done>
+	local b1:2 = vregB_11_15[96,16];
+	local res9:1 = b1:1;
+	if (b1 s< 0) goto <vpkshus_b1_min>;
+	if (b1 s> 255) goto <vpkshus_b1_max>;
+	goto <vpkshus_b1_done>;
+<vpkshus_b1_min>
+	res9 =0x00;
+	goto <vpkshus_b1_done>;
+<vpkshus_b1_max>
+	res9 =0xFF;
+<vpkshus_b1_done>
+	local b2:2 = vregB_11_15[80,16];
+	local res10:1 = b2:1;
+	if (b2 s< 0) goto <vpkshus_b2_min>;
+	if (b2 s> 255) goto <vpkshus_b2_max>;
+	goto <vpkshus_b2_done>;
+<vpkshus_b2_min>
+	res10 =0x00;
+	goto <vpkshus_b2_done>;
+<vpkshus_b2_max>
+	res10 =0xFF;
+<vpkshus_b2_done>
+	local b3:2 = vregB_11_15[64,16];
+	local res11:1 = b3:1;
+	if (b3 s< 0) goto <vpkshus_b3_min>;
+	if (b3 s> 255) goto <vpkshus_b3_max>;
+	goto <vpkshus_b3_done>;
+<vpkshus_b3_min>
+	res11 =0x00;
+	goto <vpkshus_b3_done>;
+<vpkshus_b3_max>
+	res11 =0xFF;
+<vpkshus_b3_done>
+	local b4:2 = vregB_11_15[48,16];
+	local res12:1 = b4:1;
+	if (b4 s< 0) goto <vpkshus_b4_min>;
+	if (b4 s> 255) goto <vpkshus_b4_max>;
+	goto <vpkshus_b4_done>;
+<vpkshus_b4_min>
+	res12 =0x00;
+	goto <vpkshus_b4_done>;
+<vpkshus_b4_max>
+	res12 =0xFF;
+<vpkshus_b4_done>
+	local b5:2 = vregB_11_15[32,16];
+	local res13:1 = b5:1;
+	if (b5 s< 0) goto <vpkshus_b5_min>;
+	if (b5 s> 255) goto <vpkshus_b5_max>;
+	goto <vpkshus_b5_done>;
+<vpkshus_b5_min>
+	res13 =0x00;
+	goto <vpkshus_b5_done>;
+<vpkshus_b5_max>
+	res13 =0xFF;
+<vpkshus_b5_done>
+	local b6:2 = vregB_11_15[16,16];
+	local res14:1 = b6:1;
+	if (b6 s< 0) goto <vpkshus_b6_min>;
+	if (b6 s> 255) goto <vpkshus_b6_max>;
+	goto <vpkshus_b6_done>;
+<vpkshus_b6_min>
+	res14 =0x00;
+	goto <vpkshus_b6_done>;
+<vpkshus_b6_max>
+	res14 =0xFF;
+<vpkshus_b6_done>
+	local b7:2 = vregB_11_15[0,16];
+	local res15:1 = b7:1;
+	if (b7 s< 0) goto <vpkshus_b7_min>;
+	if (b7 s> 255) goto <vpkshus_b7_max>;
+	goto <vpkshus_b7_done>;
+<vpkshus_b7_min>
+	res15 =0x00;
+	goto <vpkshus_b7_done>;
+<vpkshus_b7_max>
+	res15 =0xFF;
+<vpkshus_b7_done>
+	vregD_21_25[120,8] = res0;
+	vregD_21_25[112,8] = res1;
+	vregD_21_25[104,8] = res2;
+	vregD_21_25[96,8] = res3;
+	vregD_21_25[88,8] = res4;
+	vregD_21_25[80,8] = res5;
+	vregD_21_25[72,8] = res6;
+	vregD_21_25[64,8] = res7;
+	vregD_21_25[56,8] = res8;
+	vregD_21_25[48,8] = res9;
+	vregD_21_25[40,8] = res10;
+	vregD_21_25[32,8] = res11;
+	vregD_21_25[24,8] = res12;
+	vregD_21_25[16,8] = res13;
+	vregD_21_25[8,8] = res14;
+	vregD_21_25[0,8] = res15;
+}
+
+# 000101AAAAABBBBBCCCCCB1010B0AACC
+# vpkswss128 vr0, vr0, vr0 - Pack Signed Word Signed Saturate
+:vpkswss128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b1010 & opcode_04_04=0b0
+{
+	local a0:4 = vregA_16_20[96,32];
+	local res0:2 = a0:2;
+	if (a0 s< -32768) goto <vpkswss_a0_min>;
+	if (a0 s> 32767) goto <vpkswss_a0_max>;
+	goto <vpkswss_a0_done>;
+<vpkswss_a0_min>
+	res0 =0x8000;
+	goto <vpkswss_a0_done>;
+<vpkswss_a0_max>
+	res0 =0x7FFF;
+<vpkswss_a0_done>
+	local a1:4 = vregA_16_20[64,32];
+	local res1:2 = a1:2;
+	if (a1 s< -32768) goto <vpkswss_a1_min>;
+	if (a1 s> 32767) goto <vpkswss_a1_max>;
+	goto <vpkswss_a1_done>;
+<vpkswss_a1_min>
+	res1 =0x8000;
+	goto <vpkswss_a1_done>;
+<vpkswss_a1_max>
+	res1 =0x7FFF;
+<vpkswss_a1_done>
+	local a2:4 = vregA_16_20[32,32];
+	local res2:2 = a2:2;
+	if (a2 s< -32768) goto <vpkswss_a2_min>;
+	if (a2 s> 32767) goto <vpkswss_a2_max>;
+	goto <vpkswss_a2_done>;
+<vpkswss_a2_min>
+	res2 =0x8000;
+	goto <vpkswss_a2_done>;
+<vpkswss_a2_max>
+	res2 =0x7FFF;
+<vpkswss_a2_done>
+	local a3:4 = vregA_16_20[0,32];
+	local res3:2 = a3:2;
+	if (a3 s< -32768) goto <vpkswss_a3_min>;
+	if (a3 s> 32767) goto <vpkswss_a3_max>;
+	goto <vpkswss_a3_done>;
+<vpkswss_a3_min>
+	res3 =0x8000;
+	goto <vpkswss_a3_done>;
+<vpkswss_a3_max>
+	res3 =0x7FFF;
+<vpkswss_a3_done>
+	local b0:4 = vregB_11_15[96,32];
+	local res4:2 = b0:2;
+	if (b0 s< -32768) goto <vpkswss_b0_min>;
+	if (b0 s> 32767) goto <vpkswss_b0_max>;
+	goto <vpkswss_b0_done>;
+<vpkswss_b0_min>
+	res4 =0x8000;
+	goto <vpkswss_b0_done>;
+<vpkswss_b0_max>
+	res4 =0x7FFF;
+<vpkswss_b0_done>
+	local b1:4 = vregB_11_15[64,32];
+	local res5:2 = b1:2;
+	if (b1 s< -32768) goto <vpkswss_b1_min>;
+	if (b1 s> 32767) goto <vpkswss_b1_max>;
+	goto <vpkswss_b1_done>;
+<vpkswss_b1_min>
+	res5 =0x8000;
+	goto <vpkswss_b1_done>;
+<vpkswss_b1_max>
+	res5 =0x7FFF;
+<vpkswss_b1_done>
+	local b2:4 = vregB_11_15[32,32];
+	local res6:2 = b2:2;
+	if (b2 s< -32768) goto <vpkswss_b2_min>;
+	if (b2 s> 32767) goto <vpkswss_b2_max>;
+	goto <vpkswss_b2_done>;
+<vpkswss_b2_min>
+	res6 =0x8000;
+	goto <vpkswss_b2_done>;
+<vpkswss_b2_max>
+	res6 =0x7FFF;
+<vpkswss_b2_done>
+	local b3:4 = vregB_11_15[0,32];
+	local res7:2 = b3:2;
+	if (b3 s< -32768) goto <vpkswss_b3_min>;
+	if (b3 s> 32767) goto <vpkswss_b3_max>;
+	goto <vpkswss_b3_done>;
+<vpkswss_b3_min>
+	res7 =0x8000;
+	goto <vpkswss_b3_done>;
+<vpkswss_b3_max>
+	res7 =0x7FFF;
+<vpkswss_b3_done>
+	vregD_21_25[112,16] = res0;
+	vregD_21_25[96,16] = res1;
+	vregD_21_25[80,16] = res2;
+	vregD_21_25[64,16] = res3;
+	vregD_21_25[48,16] = res4;
+	vregD_21_25[32,16] = res5;
+	vregD_21_25[16,16] = res6;
+	vregD_21_25[0,16] = res7;
+}
+
+# 000101AAAAABBBBBCCCCCB1011B0AACC
+# vpkswus128 vr0, vr0, vr0 - Pack Signed Word Unsigned Saturate
+:vpkswus128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b1011 & opcode_04_04=0b0
+{
+	local a0:4 = vregA_16_20[96,32];
+	local res0:2 = a0:2;
+	if (a0 s< 0) goto <vpkswus_a0_min>;
+	if (a0 s> 65535) goto <vpkswus_a0_max>;
+	goto <vpkswus_a0_done>;
+<vpkswus_a0_min>
+	res0 =0x0000;
+	goto <vpkswus_a0_done>;
+<vpkswus_a0_max>
+	res0 =0xFFFF;
+<vpkswus_a0_done>
+	local a1:4 = vregA_16_20[64,32];
+	local res1:2 = a1:2;
+	if (a1 s< 0) goto <vpkswus_a1_min>;
+	if (a1 s> 65535) goto <vpkswus_a1_max>;
+	goto <vpkswus_a1_done>;
+<vpkswus_a1_min>
+	res1 =0x0000;
+	goto <vpkswus_a1_done>;
+<vpkswus_a1_max>
+	res1 =0xFFFF;
+<vpkswus_a1_done>
+	local a2:4 = vregA_16_20[32,32];
+	local res2:2 = a2:2;
+	if (a2 s< 0) goto <vpkswus_a2_min>;
+	if (a2 s> 65535) goto <vpkswus_a2_max>;
+	goto <vpkswus_a2_done>;
+<vpkswus_a2_min>
+	res2 =0x0000;
+	goto <vpkswus_a2_done>;
+<vpkswus_a2_max>
+	res2 =0xFFFF;
+<vpkswus_a2_done>
+	local a3:4 = vregA_16_20[0,32];
+	local res3:2 = a3:2;
+	if (a3 s< 0) goto <vpkswus_a3_min>;
+	if (a3 s> 65535) goto <vpkswus_a3_max>;
+	goto <vpkswus_a3_done>;
+<vpkswus_a3_min>
+	res3 =0x0000;
+	goto <vpkswus_a3_done>;
+<vpkswus_a3_max>
+	res3 =0xFFFF;
+<vpkswus_a3_done>
+	local b0:4 = vregB_11_15[96,32];
+	local res4:2 = b0:2;
+	if (b0 s< 0) goto <vpkswus_b0_min>;
+	if (b0 s> 65535) goto <vpkswus_b0_max>;
+	goto <vpkswus_b0_done>;
+<vpkswus_b0_min>
+	res4 =0x0000;
+	goto <vpkswus_b0_done>;
+<vpkswus_b0_max>
+	res4 =0xFFFF;
+<vpkswus_b0_done>
+	local b1:4 = vregB_11_15[64,32];
+	local res5:2 = b1:2;
+	if (b1 s< 0) goto <vpkswus_b1_min>;
+	if (b1 s> 65535) goto <vpkswus_b1_max>;
+	goto <vpkswus_b1_done>;
+<vpkswus_b1_min>
+	res5 =0x0000;
+	goto <vpkswus_b1_done>;
+<vpkswus_b1_max>
+	res5 =0xFFFF;
+<vpkswus_b1_done>
+	local b2:4 = vregB_11_15[32,32];
+	local res6:2 = b2:2;
+	if (b2 s< 0) goto <vpkswus_b2_min>;
+	if (b2 s> 65535) goto <vpkswus_b2_max>;
+	goto <vpkswus_b2_done>;
+<vpkswus_b2_min>
+	res6 =0x0000;
+	goto <vpkswus_b2_done>;
+<vpkswus_b2_max>
+	res6 =0xFFFF;
+<vpkswus_b2_done>
+	local b3:4 = vregB_11_15[0,32];
+	local res7:2 = b3:2;
+	if (b3 s< 0) goto <vpkswus_b3_min>;
+	if (b3 s> 65535) goto <vpkswus_b3_max>;
+	goto <vpkswus_b3_done>;
+<vpkswus_b3_min>
+	res7 =0x0000;
+	goto <vpkswus_b3_done>;
+<vpkswus_b3_max>
+	res7 =0xFFFF;
+<vpkswus_b3_done>
+	vregD_21_25[112,16] = res0;
+	vregD_21_25[96,16] = res1;
+	vregD_21_25[80,16] = res2;
+	vregD_21_25[64,16] = res3;
+	vregD_21_25[48,16] = res4;
+	vregD_21_25[32,16] = res5;
+	vregD_21_25[16,16] = res6;
+	vregD_21_25[0,16] = res7;
+}
+
+# 000101AAAAABBBBBCCCCCB1100B0AACC
+# vpkuhum128 vr0, vr0, vr0 - Pack Unsigned Half Word Unsigned Modulo
+:vpkuhum128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b1100 & opcode_04_04=0b0
+{
+	local a0:2 = vregA_16_20[112,16];
+	local res0:1 = a0:1;
+	local a1:2 = vregA_16_20[96,16];
+	local res1:1 = a1:1;
+	local a2:2 = vregA_16_20[80,16];
+	local res2:1 = a2:1;
+	local a3:2 = vregA_16_20[64,16];
+	local res3:1 = a3:1;
+	local a4:2 = vregA_16_20[48,16];
+	local res4:1 = a4:1;
+	local a5:2 = vregA_16_20[32,16];
+	local res5:1 = a5:1;
+	local a6:2 = vregA_16_20[16,16];
+	local res6:1 = a6:1;
+	local a7:2 = vregA_16_20[0,16];
+	local res7:1 = a7:1;
+	local b0:2 = vregB_11_15[112,16];
+	local res8:1 = b0:1;
+	local b1:2 = vregB_11_15[96,16];
+	local res9:1 = b1:1;
+	local b2:2 = vregB_11_15[80,16];
+	local res10:1 = b2:1;
+	local b3:2 = vregB_11_15[64,16];
+	local res11:1 = b3:1;
+	local b4:2 = vregB_11_15[48,16];
+	local res12:1 = b4:1;
+	local b5:2 = vregB_11_15[32,16];
+	local res13:1 = b5:1;
+	local b6:2 = vregB_11_15[16,16];
+	local res14:1 = b6:1;
+	local b7:2 = vregB_11_15[0,16];
+	local res15:1 = b7:1;
+	vregD_21_25[120,8] = res0;
+	vregD_21_25[112,8] = res1;
+	vregD_21_25[104,8] = res2;
+	vregD_21_25[96,8] = res3;
+	vregD_21_25[88,8] = res4;
+	vregD_21_25[80,8] = res5;
+	vregD_21_25[72,8] = res6;
+	vregD_21_25[64,8] = res7;
+	vregD_21_25[56,8] = res8;
+	vregD_21_25[48,8] = res9;
+	vregD_21_25[40,8] = res10;
+	vregD_21_25[32,8] = res11;
+	vregD_21_25[24,8] = res12;
+	vregD_21_25[16,8] = res13;
+	vregD_21_25[8,8] = res14;
+	vregD_21_25[0,8] = res15;
+}
+
+# 000101AAAAABBBBBCCCCCB1101B0AACC
+# vpkuhus128 vr0, vr0, vr0 - Pack Unsigned Half Word Unsigned Saturate
+:vpkuhus128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b1101 & opcode_04_04=0b0
+{
+	local a0:2 = vregA_16_20[112,16];
+	local res0:1 = a0:1;
+	if (a0 > 0xFF) goto <vpkuhus_a0_max>;
+	goto <vpkuhus_a0_done>;
+<vpkuhus_a0_max>
+	res0 =0xFF;
+<vpkuhus_a0_done>
+	local a1:2 = vregA_16_20[96,16];
+	local res1:1 = a1:1;
+	if (a1 > 0xFF) goto <vpkuhus_a1_max>;
+	goto <vpkuhus_a1_done>;
+<vpkuhus_a1_max>
+	res1 =0xFF;
+<vpkuhus_a1_done>
+	local a2:2 = vregA_16_20[80,16];
+	local res2:1 = a2:1;
+	if (a2 > 0xFF) goto <vpkuhus_a2_max>;
+	goto <vpkuhus_a2_done>;
+<vpkuhus_a2_max>
+	res2 =0xFF;
+<vpkuhus_a2_done>
+	local a3:2 = vregA_16_20[64,16];
+	local res3:1 = a3:1;
+	if (a3 > 0xFF) goto <vpkuhus_a3_max>;
+	goto <vpkuhus_a3_done>;
+<vpkuhus_a3_max>
+	res3 =0xFF;
+<vpkuhus_a3_done>
+	local a4:2 = vregA_16_20[48,16];
+	local res4:1 = a4:1;
+	if (a4 > 0xFF) goto <vpkuhus_a4_max>;
+	goto <vpkuhus_a4_done>;
+<vpkuhus_a4_max>
+	res4 =0xFF;
+<vpkuhus_a4_done>
+	local a5:2 = vregA_16_20[32,16];
+	local res5:1 = a5:1;
+	if (a5 > 0xFF) goto <vpkuhus_a5_max>;
+	goto <vpkuhus_a5_done>;
+<vpkuhus_a5_max>
+	res5 =0xFF;
+<vpkuhus_a5_done>
+	local a6:2 = vregA_16_20[16,16];
+	local res6:1 = a6:1;
+	if (a6 > 0xFF) goto <vpkuhus_a6_max>;
+	goto <vpkuhus_a6_done>;
+<vpkuhus_a6_max>
+	res6 =0xFF;
+<vpkuhus_a6_done>
+	local a7:2 = vregA_16_20[0,16];
+	local res7:1 = a7:1;
+	if (a7 > 0xFF) goto <vpkuhus_a7_max>;
+	goto <vpkuhus_a7_done>;
+<vpkuhus_a7_max>
+	res7 =0xFF;
+<vpkuhus_a7_done>
+	local b0:2 = vregB_11_15[112,16];
+	local res8:1 = b0:1;
+	if (b0 > 0xFF) goto <vpkuhus_b0_max>;
+	goto <vpkuhus_b0_done>;
+<vpkuhus_b0_max>
+	res8 =0xFF;
+<vpkuhus_b0_done>
+	local b1:2 = vregB_11_15[96,16];
+	local res9:1 = b1:1;
+	if (b1 > 0xFF) goto <vpkuhus_b1_max>;
+	goto <vpkuhus_b1_done>;
+<vpkuhus_b1_max>
+	res9 =0xFF;
+<vpkuhus_b1_done>
+	local b2:2 = vregB_11_15[80,16];
+	local res10:1 = b2:1;
+	if (b2 > 0xFF) goto <vpkuhus_b2_max>;
+	goto <vpkuhus_b2_done>;
+<vpkuhus_b2_max>
+	res10 =0xFF;
+<vpkuhus_b2_done>
+	local b3:2 = vregB_11_15[64,16];
+	local res11:1 = b3:1;
+	if (b3 > 0xFF) goto <vpkuhus_b3_max>;
+	goto <vpkuhus_b3_done>;
+<vpkuhus_b3_max>
+	res11 =0xFF;
+<vpkuhus_b3_done>
+	local b4:2 = vregB_11_15[48,16];
+	local res12:1 = b4:1;
+	if (b4 > 0xFF) goto <vpkuhus_b4_max>;
+	goto <vpkuhus_b4_done>;
+<vpkuhus_b4_max>
+	res12 =0xFF;
+<vpkuhus_b4_done>
+	local b5:2 = vregB_11_15[32,16];
+	local res13:1 = b5:1;
+	if (b5 > 0xFF) goto <vpkuhus_b5_max>;
+	goto <vpkuhus_b5_done>;
+<vpkuhus_b5_max>
+	res13 =0xFF;
+<vpkuhus_b5_done>
+	local b6:2 = vregB_11_15[16,16];
+	local res14:1 = b6:1;
+	if (b6 > 0xFF) goto <vpkuhus_b6_max>;
+	goto <vpkuhus_b6_done>;
+<vpkuhus_b6_max>
+	res14 =0xFF;
+<vpkuhus_b6_done>
+	local b7:2 = vregB_11_15[0,16];
+	local res15:1 = b7:1;
+	if (b7 > 0xFF) goto <vpkuhus_b7_max>;
+	goto <vpkuhus_b7_done>;
+<vpkuhus_b7_max>
+	res15 =0xFF;
+<vpkuhus_b7_done>
+	vregD_21_25[120,8] = res0;
+	vregD_21_25[112,8] = res1;
+	vregD_21_25[104,8] = res2;
+	vregD_21_25[96,8] = res3;
+	vregD_21_25[88,8] = res4;
+	vregD_21_25[80,8] = res5;
+	vregD_21_25[72,8] = res6;
+	vregD_21_25[64,8] = res7;
+	vregD_21_25[56,8] = res8;
+	vregD_21_25[48,8] = res9;
+	vregD_21_25[40,8] = res10;
+	vregD_21_25[32,8] = res11;
+	vregD_21_25[24,8] = res12;
+	vregD_21_25[16,8] = res13;
+	vregD_21_25[8,8] = res14;
+	vregD_21_25[0,8] = res15;
+}
+
+# 000101AAAAABBBBBCCCCCB1110B0AACC
+# vpkuwum128 vr0, vr0, vr0 - Pack Unsigned Word Unsigned Modulo
+:vpkuwum128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b1110 & opcode_04_04=0b0
+{
+	local a0:4 = vregA_16_20[96,32];
+	local res0:2 = a0:2;
+	local a1:4 = vregA_16_20[64,32];
+	local res1:2 = a1:2;
+	local a2:4 = vregA_16_20[32,32];
+	local res2:2 = a2:2;
+	local a3:4 = vregA_16_20[0,32];
+	local res3:2 = a3:2;
+	local b0:4 = vregB_11_15[96,32];
+	local res4:2 = b0:2;
+	local b1:4 = vregB_11_15[64,32];
+	local res5:2 = b1:2;
+	local b2:4 = vregB_11_15[32,32];
+	local res6:2 = b2:2;
+	local b3:4 = vregB_11_15[0,32];
+	local res7:2 = b3:2;
+	vregD_21_25[112,16] = res0;
+	vregD_21_25[96,16] = res1;
+	vregD_21_25[80,16] = res2;
+	vregD_21_25[64,16] = res3;
+	vregD_21_25[48,16] = res4;
+	vregD_21_25[32,16] = res5;
+	vregD_21_25[16,16] = res6;
+	vregD_21_25[0,16] = res7;
+}
+
+# 000101AAAAABBBBBCCCCCB1111B0AACC
+# vpkuwus128 vr0, vr0, vr0 - Pack Unsigned Word Unsigned Saturate
+:vpkuwus128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b1111 & opcode_04_04=0b0
+{
+	local a0:4 = vregA_16_20[96,32];
+	local res0:2 = a0:2;
+	if (a0 > 0xFFFF) goto <vpkuwus_a0_max>;
+	goto <vpkuwus_a0_done>;
+<vpkuwus_a0_max>
+	res0 =0xFFFF;
+<vpkuwus_a0_done>
+	local a1:4 = vregA_16_20[64,32];
+	local res1:2 = a1:2;
+	if (a1 > 0xFFFF) goto <vpkuwus_a1_max>;
+	goto <vpkuwus_a1_done>;
+<vpkuwus_a1_max>
+	res1 =0xFFFF;
+<vpkuwus_a1_done>
+	local a2:4 = vregA_16_20[32,32];
+	local res2:2 = a2:2;
+	if (a2 > 0xFFFF) goto <vpkuwus_a2_max>;
+	goto <vpkuwus_a2_done>;
+<vpkuwus_a2_max>
+	res2 =0xFFFF;
+<vpkuwus_a2_done>
+	local a3:4 = vregA_16_20[0,32];
+	local res3:2 = a3:2;
+	if (a3 > 0xFFFF) goto <vpkuwus_a3_max>;
+	goto <vpkuwus_a3_done>;
+<vpkuwus_a3_max>
+	res3 =0xFFFF;
+<vpkuwus_a3_done>
+	local b0:4 = vregB_11_15[96,32];
+	local res4:2 = b0:2;
+	if (b0 > 0xFFFF) goto <vpkuwus_b0_max>;
+	goto <vpkuwus_b0_done>;
+<vpkuwus_b0_max>
+	res4 =0xFFFF;
+<vpkuwus_b0_done>
+	local b1:4 = vregB_11_15[64,32];
+	local res5:2 = b1:2;
+	if (b1 > 0xFFFF) goto <vpkuwus_b1_max>;
+	goto <vpkuwus_b1_done>;
+<vpkuwus_b1_max>
+	res5 =0xFFFF;
+<vpkuwus_b1_done>
+	local b2:4 = vregB_11_15[32,32];
+	local res6:2 = b2:2;
+	if (b2 > 0xFFFF) goto <vpkuwus_b2_max>;
+	goto <vpkuwus_b2_done>;
+<vpkuwus_b2_max>
+	res6 =0xFFFF;
+<vpkuwus_b2_done>
+	local b3:4 = vregB_11_15[0,32];
+	local res7:2 = b3:2;
+	if (b3 > 0xFFFF) goto <vpkuwus_b3_max>;
+	goto <vpkuwus_b3_done>;
+<vpkuwus_b3_max>
+	res7 =0xFFFF;
+<vpkuwus_b3_done>
+	vregD_21_25[112,16] = res0;
+	vregD_21_25[96,16] = res1;
+	vregD_21_25[80,16] = res2;
+	vregD_21_25[64,16] = res3;
+	vregD_21_25[48,16] = res4;
+	vregD_21_25[32,16] = res5;
+	vregD_21_25[16,16] = res6;
+	vregD_21_25[0,16] = res7;
+}
+
+# 000110AAAA00000CCCCC1100011AACC
+# vrefp128 vr0, vr0 - Reciprocal Estimate Floating Point
+:vrefp128 vregD_21_25, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & opcode_16_20=0b00000 & vregB_11_15 & opcode_04_10=0b1100011
+{
+	# Lane-wise reciprocal estimate using exact division
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+	local one:4 = 0x3F800000;
+	vregD_21_25[96,32] = one f/ b_0;
+	vregD_21_25[64,32] = one f/ b_1;
+	vregD_21_25[32,32] = one f/ b_2;
+	vregD_21_25[0,32] = one f/ b_3;
+}
+
+# 000110AAAA00000CCCCC0110011AACC
+# vrfim128 vr0, vr0 - Round to FP Integer toward -Infinity
+:vrfim128 vregD_21_25, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & opcode_16_20=0b00000 & vregB_11_15 & opcode_04_10=0b0110011
+{
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+	vregD_21_25[96,32] = floor(b_0);
+	vregD_21_25[64,32] = floor(b_1);
+	vregD_21_25[32,32] = floor(b_2);
+	vregD_21_25[0,32] = floor(b_3);
+}
+
+# 000110AAAA00000CCCCC0110111AACC
+# vrfin128 vr0, vr0 - Round to FP Integer toward Nearest
+:vrfin128 vregD_21_25, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & opcode_16_20=0b00000 & vregB_11_15 & opcode_04_10=0b0110111
+{
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+	vregD_21_25[96,32] = round(b_0);
+	vregD_21_25[64,32] = round(b_1);
+	vregD_21_25[32,32] = round(b_2);
+	vregD_21_25[0,32] = round(b_3);
+}
+
+# 000110AAAA00000CCCCC0111011AACC
+# vrfip128 vr0, vr0 - Round to FP Integer toward +Infinity
+:vrfip128 vregD_21_25, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & opcode_16_20=0b00000 & vregB_11_15 & opcode_04_10=0b0111011
+{
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+	vregD_21_25[96,32] = ceil(b_0);
+	vregD_21_25[64,32] = ceil(b_1);
+	vregD_21_25[32,32] = ceil(b_2);
+	vregD_21_25[0,32] = ceil(b_3);
+}
+
+# 000110AAAA00000CCCCC0111111AACC
+# vrfiz128 vr0, vr0 - Round to FP Integer toward Zero
+:vrfiz128 vregD_21_25, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & opcode_16_20=0b00000 & vregB_11_15 & opcode_04_10=0b0111111
+{
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+	vregD_21_25[96,32] = trunc(b_0);
+	vregD_21_25[64,32] = trunc(b_1);
+	vregD_21_25[32,32] = trunc(b_2);
+	vregD_21_25[0,32] = trunc(b_3);
+}
+
+# 000110AAAAAsssssBBBBB111zz01AABB
+# vrlimi128 vD, vB, UIMM, Zimm - Rotate Left Immediate and Mask Insert
+# UIMM (bits 16-20): immediate mask (5 bits)
+# Zimm (bits 6-7): rotate amount (2 bits)
+:vrlimi128 vregD_21_25, vregB_11_15, uimm_16_20, zimm_06_07 is opcode_26_31=0b000110 & vregD_21_25 & uimm_16_20 & vregB_11_15 & zimm_06_07 & opcode_08_10=0b111 & opcode_04_05=0b01
+{
+	vregD_21_25 = vectorRotateLeftImmediateMaskInsert128(vregD_21_25, vregB_11_15, uimm_16_20:1, zimm_06_07:1);
+}
+
+# 000110AAAAABBBBBCCCCCB0001B1AACC
+# vrlw128 vr0, vr0, vr0 - Rotate Left Word
+:vrlw128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b0001 & opcode_04_04=0b1
+{
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local a_3:4 = vregA_16_20[0,32];
+	local sh_0:1 = vregB_11_15[96,8] & 0x1F;
+	local sh_1:1 = vregB_11_15[64,8] & 0x1F;
+	local sh_2:1 = vregB_11_15[32,8] & 0x1F;
+	local sh_3:1 = vregB_11_15[0,8] & 0x1F;
+	local res_0:4 = (a_0 << zext(sh_0)) | (a_0 >> zext(32 - sh_0));
+	local res_1:4 = (a_1 << zext(sh_1)) | (a_1 >> zext(32 - sh_1));
+	local res_2:4 = (a_2 << zext(sh_2)) | (a_2 >> zext(32 - sh_2));
+	local res_3:4 = (a_3 << zext(sh_3)) | (a_3 >> zext(32 - sh_3));
+	vregD_21_25[96,32] = res_0;
+	vregD_21_25[64,32] = res_1;
+	vregD_21_25[32,32] = res_2;
+	vregD_21_25[0,32] = res_3;
+}
+
+# 000110AAAA00000CCCCC1100111AACC
+# vrsqrtefp128 vr0, vr0 - Reciprocal Square Root Estimate Floating Point
+:vrsqrtefp128 vregD_21_25, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & opcode_16_20=0b00000 & vregB_11_15 & opcode_04_10=0b1100111
+{
+	# Lane-wise reciprocal square root estimate using exact math
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+	local one:4 = 0x3F800000;
+	vregD_21_25[96,32] = one f/ sqrt(b_0);
+	vregD_21_25[64,32] = one f/ sqrt(b_1);
+	vregD_21_25[32,32] = one f/ sqrt(b_2);
+	vregD_21_25[0,32] = one f/ sqrt(b_3);
+}
+
+# 000101AAAAABBBBBCCCCCB1101B1AACC
+# vsel128 vr0, vr0, vr0 - Conditional Select (bitwise mux)
+:vsel128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b1101 & opcode_04_04=0b1
+{
+	local mask:16 = vregD_21_25;
+	vregD_21_25 = (vregA_16_20 & ~mask) | (vregB_11_15 & mask);
+}
+
+# 000100AAAAABBBBBCCCCCBiiiiB1AACC
+# vsldoi128 vr0, vr0, vr0, imm - Shift Left Double by Octet Immediate
+:vsldoi128 vregD_21_25, vregA_16_20, vregB_11_15, uimm_06_09 is opcode_26_31=0b000100 & vregD_21_25 & vregA_16_20 & vregB_11_15 & uimm_06_09 & opcode_04_04=0b1
+{
+	# Concatenate vA and vB (32 bytes), shift left by SH*8 bits, take high 16 bytes
+	tmp:32 = (zext(vregA_16_20) << 128) | zext(vregB_11_15);
+	tmp = tmp << (uimm_06_09:1 * 8);
+	vregD_21_25 = tmp[128,128];
+}
+
+# 000101AAAAABBBBBCCCCCB1110B1AACC
+# vslo128 vr0, vr0, vr0 - Shift Left by Octet
+:vslo128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b1110 & opcode_04_04=0b1
+{
+	# Shift count comes from the low 4 bits of the last byte in vB.
+	local sh:1 = (vregB_11_15[0,8] >> 3) & 0xF;
+	local bits:1 = sh * 8;
+	vregD_21_25 = vregA_16_20 << zext(bits);
+}
+
+# 000110AAAAABBBBBCCCCCB0011B1AACC
+# vslw128 vr0, vr0, vr0 - Shift Left Word
+:vslw128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b0011 & opcode_04_04=0b1
+{
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local a_3:4 = vregA_16_20[0,32];
+	local sh_0:1 = vregB_11_15[96,8] & 0x1F;
+	local sh_1:1 = vregB_11_15[64,8] & 0x1F;
+	local sh_2:1 = vregB_11_15[32,8] & 0x1F;
+	local sh_3:1 = vregB_11_15[0,8] & 0x1F;
+	vregD_21_25[96,32] = a_0 << zext(sh_0);
+	vregD_21_25[64,32] = a_1 << zext(sh_1);
+	vregD_21_25[32,32] = a_2 << zext(sh_2);
+	vregD_21_25[0,32] = a_3 << zext(sh_3);
+}
+
+# 000110AAAAAiiiiCCCCC1110111AACC
+# vspltisw128 vr0, simm - Splat Immediate Signed Word
+:vspltisw128 vregD_21_25, simm_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & simm_16_20 & vregB_11_15 & opcode_04_10=0b1110111
+{
+	vregD_21_25 = vectorSplatImmediateSignedWord128(simm_16_20:1);
+}
+
+# 000110AAAAAiiiiCCCCC1110011AACC
+# vspltw128 vr0, vr0, uimm - Splat Word
+# uimm selects which word (0-3) from vB to splat to all lanes of vD
+# Word 0 is at bits [96,32], Word 1 at [64,32], Word 2 at [32,32], Word 3 at [0,32]
+:vspltw128 vregD_21_25, uimm_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & uimm_16_20 & vregB_11_15 & opcode_04_10=0b1110011
+{
+	# Compute bit shift: word index * 32, but offset from bit 96 going down
+	# Word 0 -> bits [96,32], Word 1 -> bits [64,32], etc.
+	# shift = (3 - (uimm & 3)) * 32 = 96 - (uimm & 3) * 32
+	local idx:1 = uimm_16_20 & 0x3;
+	local shift:1 = (3 - idx) * 32;
+	local src:16 = vregB_11_15 >> zext(shift);
+	local w:4 = src:4;
+	vregD_21_25[96,32] = w;
+	vregD_21_25[64,32] = w;
+	vregD_21_25[32,32] = w;
+	vregD_21_25[0,32] = w;
+}
+
+# 000110AAAAABBBBBCCCCCB0101B1AACC
+# vsraw128 vr0, vr0, vr0 - Shift Right Arithmetic Word
+:vsraw128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b0101 & opcode_04_04=0b1
+{
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local a_3:4 = vregA_16_20[0,32];
+	local sh_0:1 = vregB_11_15[96,8] & 0x1F;
+	local sh_1:1 = vregB_11_15[64,8] & 0x1F;
+	local sh_2:1 = vregB_11_15[32,8] & 0x1F;
+	local sh_3:1 = vregB_11_15[0,8] & 0x1F;
+	vregD_21_25[96,32] = a_0 s>> zext(sh_0);
+	vregD_21_25[64,32] = a_1 s>> zext(sh_1);
+	vregD_21_25[32,32] = a_2 s>> zext(sh_2);
+	vregD_21_25[0,32] = a_3 s>> zext(sh_3);
+}
+
+# 000101AAAAABBBBBCCCCCB0101B1AACC
+# vsro128 vr0, vr0, vr0 - Shift Right by Octet
+:vsro128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b1111 & opcode_04_04=0b1
+{
+	# Shift count comes from the low 4 bits of the last byte in vB.
+	local sh:1 = (vregB_11_15[0,8] >> 3) & 0xF;
+	local bits:1 = sh * 8;
+	vregD_21_25 = vregA_16_20 >> zext(bits);
+}
+
+# 000110AAAAABBBBBCCCCCB0111B1AACC
+# vsrw128 vr0, vr0, vr0 - Shift Right Word
+:vsrw128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b0111 & opcode_04_04=0b1
+{
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local a_3:4 = vregA_16_20[0,32];
+	local sh_0:1 = vregB_11_15[96,8] & 0x1F;
+	local sh_1:1 = vregB_11_15[64,8] & 0x1F;
+	local sh_2:1 = vregB_11_15[32,8] & 0x1F;
+	local sh_3:1 = vregB_11_15[0,8] & 0x1F;
+	vregD_21_25[96,32] = a_0 >> zext(sh_0);
+	vregD_21_25[64,32] = a_1 >> zext(sh_1);
+	vregD_21_25[32,32] = a_2 >> zext(sh_2);
+	vregD_21_25[0,32] = a_3 >> zext(sh_3);
+}
+
+# 000101AAAAABBBBBCCCCCB0001B1AACC
+# vsubfp128 vr0, vr0, vr0 - Subtract Floating Point
+:vsubfp128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b0001 & opcode_04_04=0b1
+{
+	# Lane-wise FP subtract: vD[i] = vA[i] - vB[i] for each 32-bit float lane
+	local a_0:4 = vregA_16_20[96,32];
+	local a_1:4 = vregA_16_20[64,32];
+	local a_2:4 = vregA_16_20[32,32];
+	local a_3:4 = vregA_16_20[0,32];
+	local b_0:4 = vregB_11_15[96,32];
+	local b_1:4 = vregB_11_15[64,32];
+	local b_2:4 = vregB_11_15[32,32];
+	local b_3:4 = vregB_11_15[0,32];
+	local res_0:4 = a_0 f- b_0;
+	local res_1:4 = a_1 f- b_1;
+	local res_2:4 = a_2 f- b_2;
+	local res_3:4 = a_3 f- b_3;
+	vregD_21_25[96,32] = res_0;
+	vregD_21_25[64,32] = res_1;
+	vregD_21_25[32,32] = res_2;
+	vregD_21_25[0,32] = res_3;
+}
+
+# 000110AAAAAiiiiiBBBBB1111111AABB
+# vupkd3d128 vr0, vr0, UIMM - Unpack D3D Type (Xbox 360 specific)
+# Note: Uses pcodeop stub - full semantics too complex for SLEIGH
+:vupkd3d128 vregD_21_25, uimm_16_20, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & uimm_16_20 & vregB_11_15 & opcode_04_10=0b1111111
+{
+	vregD_21_25 = vectorUnpackD3D128(vregB_11_15, uimm_16_20:1);
+}
+
+# 000110AAAA00000CCCCC0111000AACC
+# vupkhsb128 vr0, vr0 - Unpack High Signed Byte
+:vupkhsb128 vregD_21_25, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & opcode_16_20=0b00000 & vregB_11_15 & opcode_04_10=0b0111000
+{
+	local b0:1 = vregB_11_15[120,8];
+	local b1:1 = vregB_11_15[112,8];
+	local b2:1 = vregB_11_15[104,8];
+	local b3:1 = vregB_11_15[96,8];
+	local b4:1 = vregB_11_15[88,8];
+	local b5:1 = vregB_11_15[80,8];
+	local b6:1 = vregB_11_15[72,8];
+	local b7:1 = vregB_11_15[64,8];
+	vregD_21_25[112,16] = sext(b0);
+	vregD_21_25[96,16] = sext(b1);
+	vregD_21_25[80,16] = sext(b2);
+	vregD_21_25[64,16] = sext(b3);
+	vregD_21_25[48,16] = sext(b4);
+	vregD_21_25[32,16] = sext(b5);
+	vregD_21_25[16,16] = sext(b6);
+	vregD_21_25[0,16] = sext(b7);
+}
+
+# 000110AAAA00000CCCCC1111010AACC
+# vupkhsh128 vr0, vr0 - Unpack High Signed Half Word
+:vupkhsh128 vregD_21_25, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & opcode_16_20=0b00000 & vregB_11_15 & opcode_04_10=0b1111010
+{
+	local h0:2 = vregB_11_15[112,16];
+	local h1:2 = vregB_11_15[96,16];
+	local h2:2 = vregB_11_15[80,16];
+	local h3:2 = vregB_11_15[64,16];
+	vregD_21_25[96,32] = sext(h0);
+	vregD_21_25[64,32] = sext(h1);
+	vregD_21_25[32,32] = sext(h2);
+	vregD_21_25[0,32] = sext(h3);
+}
+
+# 000110AAAA00000CCCCC0111100AACC
+# vupklsb128 vr0, vr0 - Unpack Low Signed Byte
+:vupklsb128 vregD_21_25, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & opcode_16_20=0b00000 & vregB_11_15 & opcode_04_10=0b0111100
+{
+	local b0:1 = vregB_11_15[56,8];
+	local b1:1 = vregB_11_15[48,8];
+	local b2:1 = vregB_11_15[40,8];
+	local b3:1 = vregB_11_15[32,8];
+	local b4:1 = vregB_11_15[24,8];
+	local b5:1 = vregB_11_15[16,8];
+	local b6:1 = vregB_11_15[8,8];
+	local b7:1 = vregB_11_15[0,8];
+	vregD_21_25[112,16] = sext(b0);
+	vregD_21_25[96,16] = sext(b1);
+	vregD_21_25[80,16] = sext(b2);
+	vregD_21_25[64,16] = sext(b3);
+	vregD_21_25[48,16] = sext(b4);
+	vregD_21_25[32,16] = sext(b5);
+	vregD_21_25[16,16] = sext(b6);
+	vregD_21_25[0,16] = sext(b7);
+}
+
+# 000110AAAA00000CCCCC1111110AACC
+# vupklsh128 vr0, vr0 - Unpack Low Signed Half Word
+:vupklsh128 vregD_21_25, vregB_11_15 is opcode_26_31=0b000110 & vregD_21_25 & opcode_16_20=0b00000 & vregB_11_15 & opcode_04_10=0b1111110
+{
+	local h0:2 = vregB_11_15[48,16];
+	local h1:2 = vregB_11_15[32,16];
+	local h2:2 = vregB_11_15[16,16];
+	local h3:2 = vregB_11_15[0,16];
+	vregD_21_25[96,32] = sext(h0);
+	vregD_21_25[64,32] = sext(h1);
+	vregD_21_25[32,32] = sext(h2);
+	vregD_21_25[0,32] = sext(h3);
+}
+
+# 000101AAAAABBBBBCCCCCB1100B1AACC
+# vxor128 vr0, vr0, vr0 - Logical XOR
+:vxor128 vregD_21_25, vregA_16_20, vregB_11_15 is opcode_26_31=0b000101 & vregD_21_25 & vregA_16_20 & vregB_11_15 & opcode_06_09=0b1100 & opcode_04_04=0b1
+{
+	vregD_21_25 = vregA_16_20 ^ vregB_11_15;
+}
+
+# 011111AAAAABBBBBCCCCC10000001110
+# lvlx vr0, r0, r0 - Load Vector Left Indexed (Cell/VMX extension)
+:lvlx vrD, A, B is OP=0b011111 & vrD & A & B & XOP_0_10=0b10000001110
+{
+	vrD = loadVectorLeftIndexed128(A, B);
+}
+
+# 011111AAAAABBBBBCCCCC11000001110
+# lvlxl vr0, r0, r0 - Load Vector Left Indexed LRU
+:lvlxl vrD, A, B is OP=0b011111 & vrD & A & B & XOP_0_10=0b11000001110
+{
+	vrD = loadVectorLeftIndexed128(A, B);
+}
+
+# 011111AAAAABBBBBCCCCC10001001110
+# lvrx vr0, r0, r0 - Load Vector Right Indexed
+:lvrx vrD, A, B is OP=0b011111 & vrD & A & B & XOP_0_10=0b10001001110
+{
+	vrD = loadVectorRightIndexed128(A, B);
+}
+
+# 011111AAAAABBBBBCCCCC11001001110
+# lvrxl vr0, r0, r0 - Load Vector Right Indexed LRU
+:lvrxl vrD, A, B is OP=0b011111 & vrD & A & B & XOP_0_10=0b11001001110
+{
+	vrD = loadVectorRightIndexed128(A, B);
+}
+
+# 011111AAAAABBBBBCCCCC10100001110
+# stvlx vr0, r0, r0 - Store Vector Left Indexed
+:stvlx vrD, A, B is OP=0b011111 & vrD & A & B & XOP_0_10=0b10100001110
+{
+	storeVectorLeftIndexed128(vrD, A, B);
+}
+
+# 011111AAAAABBBBBCCCCC11100001110
+# stvlxl vr0, r0, r0 - Store Vector Left Indexed LRU
+:stvlxl vrD, A, B is OP=0b011111 & vrD & A & B & XOP_0_10=0b11100001110
+{
+	storeVectorLeftIndexed128(vrD, A, B);
+}
+
+# 011111AAAAABBBBBCCCCC10101001110
+# stvrx vr0, r0, r0 - Store Vector Right Indexed
+:stvrx vrD, A, B is OP=0b011111 & vrD & A & B & XOP_0_10=0b10101001110
+{
+	storeVectorRightIndexed128(vrD, A, B);
+}
+
+# 011111AAAAABBBBBCCCCC11101001110
+# stvrxl vr0, r0, r0 - Store Vector Right Indexed LRU
+:stvrxl vrD, A, B is OP=0b011111 & vrD & A & B & XOP_0_10=0b11101001110
+{
+	storeVectorRightIndexed128(vrD, A, B);
+}
